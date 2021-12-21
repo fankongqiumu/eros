@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <packaging>pom</packaging>
+    <modules>
+        <module>eros-common</module>
+        <module>eros-client</module>
+        <module>eros-server</module>
+        <module>eros-web</module>
+        <module>eros-user</module>
+        <module>eros-demo</module>
+    </modules>
+    <groupId>com.github.eros</groupId>
+    <artifactId>eros</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>eros</name>
+
+    <properties>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <java.version>1.8</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <eros-common.version>0.0.1-SNAPSHOT</eros-common.version>
+        <eros-client.version>0.0.1-SNAPSHOT</eros-client.version>
+        <eros-server.version>0.0.1-SNAPSHOT</eros-server.version>
+        <eros-web.version>0.0.1-SNAPSHOT</eros-web.version>
+
+        <spring-boot.version>2.5.7</spring-boot.version>
+        <joda.version>2.9.9</joda.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.github.eros</groupId>
+                <artifactId>eros-common</artifactId>
+                <version>${eros-common.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.eros</groupId>
+                <artifactId>eros-client</artifactId>
+                <version>${eros-client.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.eros</groupId>
+                <artifactId>eros-server</artifactId>
+                <version>${eros-server.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.eros</groupId>
+                <artifactId>eros-web</artifactId>
+                <version>${eros-web.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.eros</groupId>
+                <artifactId>eros-user</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.eros</groupId>
+                <artifactId>eros-demo</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>1.2.7</version>
+            </dependency>
+            <!-- ReflectASM反射工具包 -->
+            <dependency>
+                <groupId>com.esotericsoftware</groupId>
+                <artifactId>reflectasm</artifactId>
+                <version>1.10.1</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>3.5</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>28.2-jre</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-all</artifactId>
+                <version>4.1.63.Final</version>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>okhttp</artifactId>
+                <version>3.13.1</version>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.retrofit2</groupId>
+                <artifactId>retrofit</artifactId>
+                <version>2.5.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.ligboy.retrofit2</groupId>
+                <artifactId>converter-fastjson</artifactId>
+                <version>2.1.0</version>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/com.squareup.retrofit2/converter-gson -->
+            <dependency>
+                <groupId>com.squareup.retrofit2</groupId>
+                <artifactId>converter-gson</artifactId>
+                <version>2.3.0</version>
+            </dependency>
+
+            <!-- joda time process -->
+            <dependency>
+                <groupId>joda-time</groupId>
+                <artifactId>joda-time</artifactId>
+                <version>${joda.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter</artifactId>
+                <version>${spring-boot.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-test</artifactId>
+                <version>${spring-boot.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-web</artifactId>
+                <version>${spring-boot.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.mybatis.spring.boot</groupId>
+                <artifactId>mybatis-spring-boot-starter</artifactId>
+                <version>2.1.4</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>2.5.7</version>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
