@@ -1,6 +1,5 @@
 package com.github.eros.server.event.config;
 
-import com.github.eros.client.retrofit.entry.ConfigInfo;
 import com.github.eros.server.event.Event;
 
 /**
@@ -10,11 +9,11 @@ import com.github.eros.server.event.Event;
  */
 public class ConfigModifyEvent extends Event {
 
-    public ConfigModifyEvent(ConfigInfo source) {
+    public ConfigModifyEvent(Object source) {
         super(source);
     }
 
-    public ConfigInfo getConfigInfo() {
-        return (ConfigInfo)source;
+    public Object getConfigInfo() {
+        return source;
     }
 }

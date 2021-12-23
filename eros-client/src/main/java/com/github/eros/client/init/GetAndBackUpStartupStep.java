@@ -21,7 +21,7 @@ final class GetAndBackUpStartupStep extends ClientStartupStep {
             ErosClientListener.nonListenerCallback();
             return;
         }
-        listeners.forEach(ErosClientListener::fetchAtFixedRate);
+        listeners.forEach(ErosClientListener::watchAtFixedRate);
     }
 
     /**

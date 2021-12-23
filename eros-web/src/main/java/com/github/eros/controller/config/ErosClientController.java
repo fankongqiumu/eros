@@ -1,15 +1,13 @@
 package com.github.eros.controller.config;
 
 
-import com.github.eros.client.retrofit.entry.ConfigInfo;
 import com.github.eros.common.lang.MD5;
 import com.github.eros.common.model.Result;
 import com.github.eros.common.util.JsonUtils;
 import com.github.eros.controller.user.UserInfoHolder;
 import com.github.eros.entry.UserInfo;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,19 +22,11 @@ import java.util.Map;
 @RestController
 public class ErosClientController {
 
-    @GetMapping("/config/fetch")
-    public Result<ConfigInfo> getConfig(HttpServletRequest request, @RequestParam("appName") String appName,
-                            @RequestParam("groupId") String groupId,
-                            @RequestParam("dataId") String dataId){
-        int timeout = request.getIntHeader("timeout");
-
+    @GetMapping("/fetch/{namespace}")
+    public Result<String> fetch(HttpServletRequest request, @PathVariable("namespace") String namespace){
         Map<Integer, UserInfo> userInfoMap = UserInfoHolder.getAll();
         String configData = JsonUtils.toJsonString(userInfoMap.values());
-        ConfigInfo configInfo = new ConfigInfo();
-        configInfo.setConfigData(configData);
-        configInfo.setLastModified(System.currentTimeMillis());
-        configInfo.setMd5(MD5.getInstance().getMD5(configData));
-        return Result.createSuccessWithData(configInfo);
+        return Result.createSuccessWithData(configData);
     }
 
 

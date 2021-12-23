@@ -1,6 +1,5 @@
 package com.github.eros.server.event.config;
 
-import com.github.eros.client.retrofit.entry.ConfigInfo;
 import com.github.eros.server.event.EventListener;
 import com.github.eros.server.event.EventPool;
 import org.springframework.stereotype.Component;
@@ -19,7 +18,6 @@ public class ConfigModifyEventListener implements EventListener<ConfigModifyEven
 
     @Override
     public void onEvent(ConfigModifyEvent event) {
-        ConfigInfo configInfo = event.getConfigInfo();
         // todo do something
     }
 
