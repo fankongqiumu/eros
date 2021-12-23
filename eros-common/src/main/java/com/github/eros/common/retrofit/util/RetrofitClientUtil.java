@@ -22,7 +22,7 @@ public class RetrofitClientUtil {
 
     private static final Logger logger = LoggerFactory.getLogger(RetrofitClientUtil.class);
 
-    private static final Integer DEFAULT_RETRY_COUNT = 3;
+    private static final Integer DEFAULT_RETRY_COUNT = 1;
 
     public RetrofitClientUtil() {
     }

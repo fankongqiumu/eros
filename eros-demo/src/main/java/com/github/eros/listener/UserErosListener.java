@@ -20,17 +20,17 @@ public class UserErosListener extends ErosClientListener {
     public static volatile Map<Long, UserInfo> userInfoConfig = new ConcurrentHashMap<>();
 
     @Override
-    public String getAppName() {
+    public String getApp() {
         return "USER_APP";
     }
 
     @Override
-    public String getDataId() {
+    public String getNamespace() {
         return "USER_DEFAULT";
     }
 
     @Override
-    public String getGropId() {
+    public String getGrop() {
         return "USER_DEFAULT_GROUP";
     }
 

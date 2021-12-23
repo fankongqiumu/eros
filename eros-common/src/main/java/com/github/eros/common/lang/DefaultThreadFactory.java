@@ -11,12 +11,18 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class DefaultThreadFactory  implements ThreadFactory {
     private final ThreadGroup group;
+    private Boolean isDaemon;
     private final AtomicInteger threadNumber = new AtomicInteger(1);
     private final String namePrefix;
 
     public static ThreadFactory defaultThreadFactory(String namePrefix) {
         Objects.requireNonNull(namePrefix);
         return new DefaultThreadFactory(namePrefix);
+    }
+
+    public static ThreadFactory defaultThreadFactory(String namePrefix, Boolean isDaemon) {
+        Objects.requireNonNull(namePrefix);
+        return new DefaultThreadFactory(namePrefix, isDaemon);
     }
 
 
@@ -27,13 +33,25 @@ public class DefaultThreadFactory  implements ThreadFactory {
         this.namePrefix = namePrefix;
     }
 
+    DefaultThreadFactory(String namePrefix, Boolean isDaemon) {
+        SecurityManager s = System.getSecurityManager();
+        this.group = (s != null) ? s.getThreadGroup() :
+                Thread.currentThread().getThreadGroup();
+        this.namePrefix = namePrefix;
+        this.isDaemon = isDaemon;
+    }
+
     @Override
-    public Thread newThread(Runnable r) {
-        Thread t = new Thread(group, r,
+    public Thread newThread(Runnable runnable) {
+        Thread thread = new Thread(group, runnable,
                 namePrefix + threadNumber.getAndIncrement(),
                 0);
-        t.setDaemon(true);
-        t.setPriority(Thread.NORM_PRIORITY);
-        return t;
+        if (null != this.isDaemon) {
+            thread.setDaemon(this.isDaemon);
+        } else {
+            thread.setDaemon(true);
+        }
+        thread.setPriority(Thread.NORM_PRIORITY);
+        return thread;
     }
 }

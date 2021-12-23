@@ -31,9 +31,11 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class ErosClientListener implements Runnable {
 
-    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
+    protected static final Logger logger = LoggerFactory.getLogger(ErosClientListener.class);
 
-    protected final Object lock = new Object();
+    protected static final Object lock = new Object();
+
+    private static volatile boolean listenersLoaded = false;
 
     private static volatile ScheduledExecutorService scheduledExecutorService;
 
@@ -45,22 +47,22 @@ public abstract class ErosClientListener implements Runnable {
 
     private ConfigInfo configInfo;
 
-    public abstract String getAppName();
+    public abstract String getApp();
 
-    public abstract String getDataId();
+    public abstract String getNamespace();
 
-    public abstract String getGropId();
+    public abstract String getGrop();
 
     protected abstract void onReceiveConfigInfo(String configData);
 
     protected ErosClientListener() {
         listenerBaseInfoValidate();
         synchronized (lock) {
-            String dataId = getDataId();
-            if (CONFIG_LISTENER_HOLDER.containsKey(dataId)) {
-                throw new ErosException(ErosError.BUSINIESS_ERROR, "the dataId: " + dataId + " exist...");
+            String namespace = getNamespace();
+            if (CONFIG_LISTENER_HOLDER.containsKey(namespace)) {
+                throw new ErosException(ErosError.BUSINIESS_ERROR, "the namespace: " + namespace + " exist...");
             }
-            CONFIG_LISTENER_HOLDER.put(dataId, this);
+            CONFIG_LISTENER_HOLDER.put(namespace, this);
             RetrofitClient client = RetrofitClient.Builder.build(ConfigService.class);
             this.configService = client.getRetrofitServiceInstance(ConfigService.class);
         }
@@ -76,7 +78,7 @@ public abstract class ErosClientListener implements Runnable {
 
     public void fetchAtFixedRate() {
         // todo 长连接拉取
-        scheduledExecutorService.scheduleWithFixedDelay(this, 0, 10, TimeUnit.SECONDS);
+        scheduledExecutorService.scheduleWithFixedDelay(this, 1, 10, TimeUnit.SECONDS);
     }
 
     public static void nonListenerCallback() {
@@ -86,14 +88,14 @@ public abstract class ErosClientListener implements Runnable {
     }
 
     private void listenerBaseInfoValidate() {
-        if (StringUtils.isBlank(getAppName())) {
-            throw new ErosException(ErosError.BUSINIESS_ERROR, "appName can not be empty...");
+        if (StringUtils.isBlank(getApp())) {
+            throw new ErosException(ErosError.BUSINIESS_ERROR, "app can not be empty...");
         }
-        if (StringUtils.isBlank(getGropId())) {
-            throw new ErosException(ErosError.BUSINIESS_ERROR, "groupId can not be empty...");
+        if (StringUtils.isBlank(getGrop())) {
+            throw new ErosException(ErosError.BUSINIESS_ERROR, "group can not be empty...");
         }
-        if (StringUtils.isBlank(getDataId())) {
-            throw new ErosException(ErosError.BUSINIESS_ERROR, "dataId can not be empty...");
+        if (StringUtils.isBlank(getNamespace())) {
+            throw new ErosException(ErosError.BUSINIESS_ERROR, "namespace can not be empty...");
         }
     }
 
@@ -101,9 +103,9 @@ public abstract class ErosClientListener implements Runnable {
     public void run() {
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         logger.info("{} fetch config on:{}", Thread.currentThread().getName(), format.format(new Date()));
-        Result<ConfigInfo> configResult = RetrofitClientUtil.executeCall(configService.fetch(getAppName(), getGropId(), getDataId()));
+        Result<ConfigInfo> configResult = RetrofitClientUtil.executeCall(configService.watch( getNamespace(), getApp(), getGrop()));
         if (configResult.isNotSuccess()) {
-            logger.error("fetch [{}] config from server, respnse:{}", getDataId(), configResult);
+            logger.error("fetch [{}] config from server, respnse:{}, on{}", getNamespace(), configResult, format.format(new Date()));
             return;
         }
         ConfigInfo configResultData = configResult.getData();
@@ -127,9 +129,15 @@ public abstract class ErosClientListener implements Runnable {
         return false;
     }
 
-    public static void loadAndInstanceListeners() {
-        // 获取classpath下所有实现了本抽象类的类型 并实例化
-        ErosFacadeLoader.loadListeners(ErosClientListener.class, ErosClientListener.class.getClassLoader());
+    private static void loadAndInstanceListeners() {
+        if (listenersLoaded) {
+            return;
+        }
+        synchronized (lock) {
+            // 获取classpath下所有实现了本抽象类的类型 并实例化
+            ErosFacadeLoader.loadListeners(ErosClientListener.class, ErosClientListener.class.getClassLoader());
+            listenersLoaded = true;
+        }
     }
 
     public static Collection<ErosClientListener> getListeners(){
@@ -139,13 +147,27 @@ public abstract class ErosClientListener implements Runnable {
             );
         }
         if (CONFIG_LISTENER_HOLDER.isEmpty()) {
-            loadAndInstanceListeners();
-        }
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            if (!scheduledExecutorService.isShutdown()) {
-                scheduledExecutorService.shutdown();
+            synchronized (lock) {
+                if (CONFIG_LISTENER_HOLDER.isEmpty()) {
+                    loadAndInstanceListeners();
+                }
             }
-        }));
+        }
+        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+            private volatile boolean hasShutdown = false;
+            @Override
+            public void run() {
+                synchronized (lock) {
+                    if (!this.hasShutdown) {
+                        this.hasShutdown = true;
+                        long beginTime = System.currentTimeMillis();
+                        scheduledExecutorService.shutdown();
+                        long consumingTimeTotal = System.currentTimeMillis() - beginTime;
+                        logger.info("Shutdown hook over, consuming total time(ms): {}", consumingTimeTotal);
+                    }
+                }
+            }
+        }, "ShutdownHook"));
         return CONFIG_LISTENER_HOLDER.values();
     }
 }

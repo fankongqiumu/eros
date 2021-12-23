@@ -28,6 +28,8 @@ public class ErosClientController {
     public Result<ConfigInfo> getConfig(HttpServletRequest request, @RequestParam("appName") String appName,
                             @RequestParam("groupId") String groupId,
                             @RequestParam("dataId") String dataId){
+        int timeout = request.getIntHeader("timeout");
+
         Map<Integer, UserInfo> userInfoMap = UserInfoHolder.getAll();
         String configData = JsonUtils.toJsonString(userInfoMap.values());
         ConfigInfo configInfo = new ConfigInfo();

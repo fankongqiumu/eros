@@ -49,8 +49,7 @@ public class ErosFacadeLoader {
             Constructor<?> constructor = instanceClass.getDeclaredConstructor();
             constructor.setAccessible(true);
             return (T) constructor.newInstance();
-        }
-        catch (Throwable ex) {
+        } catch (Throwable ex) {
             throw new IllegalArgumentException("Unable to instantiate facade class: " + facadeClass.getName(), ex);
         }
     }

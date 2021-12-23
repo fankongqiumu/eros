@@ -33,10 +33,10 @@
             <groupId>com.squareup.retrofit2</groupId>
             <artifactId>retrofit</artifactId>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.ligboy.retrofit2</groupId>-->
-<!--            <artifactId>converter-fastjson</artifactId>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.ligboy.retrofit2</groupId>-->
+        <!--            <artifactId>converter-fastjson</artifactId>-->
+        <!--        </dependency>-->
         <dependency>
             <groupId>com.squareup.retrofit2</groupId>
             <artifactId>converter-gson</artifactId>
@@ -47,10 +47,10 @@
             <artifactId>asm-all</artifactId>
             <version>5.0.4</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>javax.validateion</groupId>-->
-<!--            <artifactId>validation-api</artifactId>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>javax.validateion</groupId>-->
+        <!--            <artifactId>validation-api</artifactId>-->
+        <!--        </dependency>-->
     </dependencies>
 
 </project>

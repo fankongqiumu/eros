@@ -3,8 +3,11 @@ package com.github.eros.common.retrofit.client;
 
 import com.github.eros.common.lang.DefaultThreadFactory;
 import com.github.eros.common.retrofit.annotation.RetrofitClientContext;
-import okhttp3.Interceptor;
+import com.github.eros.common.retrofit.intercept.Okhttp3Interceptor;
+import okhttp3.*;
 
+import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -17,15 +20,15 @@ import java.util.concurrent.TimeUnit;
 public class DefaultRetrofitClientContext implements RetrofitClientContext {
 
     /**
-     * 连接信息
+     * 目前是超时信息
      */
-    private ServiceRequestAttribute serviceRequestAttribute;
+    protected ServiceRequestAttribute serviceRequestAttribute;
 
-    private ExecuteThreadPoolConfig executeThreadPoolConfig;
+    protected ExecuteThreadPoolConfig executeThreadPoolConfig;
 
-    private ConnectionPoolConfig connectionPoolConfig;
+    protected ConnectionPoolConfig connectionPoolConfig;
 
-    private DefaultRetrofitClientContext() {
+    public DefaultRetrofitClientContext() {
     }
 
 
@@ -38,10 +41,33 @@ public class DefaultRetrofitClientContext implements RetrofitClientContext {
         return this.serviceRequestAttribute;
     }
 
-
     @Override
     public Interceptor getInterceptor() {
-        return chain -> chain.proceed(chain.request());
+        ServiceRequestAttribute serviceRequestAttribute = getServiceRequestAttribute();
+        Long timeout = serviceRequestAttribute.getReadTimeout();
+        Map<String, String> headers = serviceRequestAttribute.getHeaders();
+        return chain -> {
+            Request request = chain.request();
+            if (null != headers && !headers.isEmpty()) {
+                HttpUrl.Builder authorizedUrlBuilder = request.url()
+                        .newBuilder()
+                        .scheme(request.url().scheme())
+                        .host(request.url().host());
+
+
+                Request.Builder newBuilder = request.newBuilder()
+                        .method(request.method(), request.body())
+                        .url(authorizedUrlBuilder.build())
+                        .addHeader("timeout", String.valueOf(timeout));
+                // 如果有扩展则添加添加新的参数到header
+                headers.forEach(newBuilder::addHeader);
+                newBuilder.addHeader("Connection","keep-alive");
+                newBuilder.addHeader("requestId", String.valueOf(System.nanoTime()));
+                request = newBuilder.build();
+            }
+            // 新的请求
+            return chain.proceed(request);
+        };
     }
 
     @Override

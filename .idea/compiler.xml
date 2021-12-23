@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="eros-user" />
+        <module name="eros-demo" />
+        <module name="eros-web" />
+        <module name="eros-client" />
+        <module name="eros-server" />
+        <module name="eros-common" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="eros" target="1.8" />
+      <module name="eros-client" target="1.8" />
+      <module name="eros-common" target="1.8" />
+      <module name="eros-demo" target="1.8" />
+      <module name="eros-server" target="1.8" />
+      <module name="eros-user" target="1.8" />
+      <module name="eros-web" target="1.8" />
+    </bytecodeTargetLevel>
+  </component>
+</project>

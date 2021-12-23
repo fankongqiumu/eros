@@ -1,5 +1,6 @@
 package com.github.eros.common.retrofit.client;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -8,10 +9,11 @@ import java.util.concurrent.TimeUnit;
  * @date 2021/12/17 17:08
  */
 public class ServiceRequestAttribute {
-    private TimeUnit unit = TimeUnit.SECONDS;
-    private Long connectTimeout = 3L;
-    private Long readTimeout = 30L;
-    private Long writeTimeout = 3L;
+    private TimeUnit unit = TimeUnit.MILLISECONDS;
+    private Long connectTimeout = 300000L;
+    private Long readTimeout = 300000L;
+    private Long writeTimeout = 300000L;
+    private Map<String, String> headers;
 
 
     public ServiceRequestAttribute() {
@@ -51,5 +53,13 @@ public class ServiceRequestAttribute {
 
     public void setWriteTimeout(Long writeTimeout) {
         this.writeTimeout = writeTimeout;
+    }
+
+    public Map<String, String> getHeaders() {
+        return headers;
+    }
+
+    public void setHeaders(Map<String, String> headers) {
+        this.headers = headers;
     }
 }

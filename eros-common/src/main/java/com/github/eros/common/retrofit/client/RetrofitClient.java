@@ -13,6 +13,9 @@ import retrofit2.Call;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -95,6 +98,7 @@ public class RetrofitClient {
                     .connectionPool(new ConnectionPool(connectionPoolConfig.getMaxIdleConnections(), connectionPoolConfig.getKeepAliveDuration(), connectionPoolConfig.getTimeUnit()))
                     .connectTimeout(serviceRequestAttribute.getConnectTimeout(), serviceRequestAttribute.getUnit())
                     .readTimeout(serviceRequestAttribute.getReadTimeout(), serviceRequestAttribute.getUnit())
+                    .callTimeout(serviceRequestAttribute.getReadTimeout(), serviceRequestAttribute.getUnit())
                     .writeTimeout(serviceRequestAttribute.getWriteTimeout(), serviceRequestAttribute.getUnit())
                     .build();
 
@@ -170,10 +174,17 @@ public class RetrofitClient {
 
     private static void enableRetrofitServiceContexClasstValidate(Class<?> retrofitServiceContextClass){
         Class<?>[] interfaces = retrofitServiceContextClass.getInterfaces();
-        if (ArrayUtils.isEmpty(interfaces)) {
+        List<Class<?>>  interfaceClassList = new ArrayList<>(Arrays.asList(interfaces));
+        Class<?> superClass = retrofitServiceContextClass.getSuperclass();
+        while (superClass != Object.class) {
+            interfaceClassList.addAll(Arrays.asList(superClass.getInterfaces()));
+            superClass = superClass.getSuperclass();
+        }
+
+        if (interfaceClassList.isEmpty()) {
             throw new ErosRetrofitException(ErosError.SYSTEM_ERROR, "retrofitServiceContextClass must impl RetrofitClientContext.class...");
         }
-        for (Class<?> anInterface : interfaces) {
+        for (Class<?> anInterface : interfaceClassList) {
             if (anInterface == RetrofitClientContext.class){
                 return;
             }
