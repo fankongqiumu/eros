@@ -8,10 +8,11 @@
         <outputRelativeToContentRoot value="true" />
         <module name="eros-user" />
         <module name="eros-demo" />
+        <module name="eros-server" />
         <module name="eros-web" />
         <module name="eros-client" />
-        <module name="eros-server" />
         <module name="eros-common" />
+        <module name="eros-domain" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
@@ -19,6 +20,7 @@
       <module name="eros-client" target="1.8" />
       <module name="eros-common" target="1.8" />
       <module name="eros-demo" target="1.8" />
+      <module name="eros-domain" target="8" />
       <module name="eros-server" target="1.8" />
       <module name="eros-user" target="1.8" />
       <module name="eros-web" target="1.8" />

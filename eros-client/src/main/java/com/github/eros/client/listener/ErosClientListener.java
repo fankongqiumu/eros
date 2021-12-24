@@ -7,12 +7,15 @@ import com.github.eros.common.constant.HttpConstants;
 import com.github.eros.common.exception.ErosError;
 import com.github.eros.common.exception.ErosException;
 import com.github.eros.common.lang.DefaultThreadFactory;
-import com.github.eros.common.lang.ErosFacadeLoader;
+import com.github.eros.common.lang.FacadeLoader;
 import com.github.eros.common.model.Result;
+import com.github.eros.domain.Config;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
@@ -25,7 +28,7 @@ import java.util.concurrent.*;
  * @description
  * @date 2021/12/20 00:17
  */
-public abstract class ErosClientListener{
+public abstract class ErosClientListener {
 
     protected static final Logger logger = LoggerFactory.getLogger(ErosClientListener.class);
 
@@ -46,6 +49,16 @@ public abstract class ErosClientListener{
     private final WatchConfigService configService;
 
     private final FetchConfigService fetchConfigService;
+
+    private static final String localIp;
+
+    static {
+        try {
+            localIp = InetAddress.getLocalHost().getHostAddress();
+        } catch (UnknownHostException e) {
+            throw new ErosException(ErosError.SYSTEM_ERROR, "InetAddress.getLocalHost().getHostAddress() error", e);
+        }
+    }
 
     public abstract String getApp();
 
@@ -76,14 +89,40 @@ public abstract class ErosClientListener{
         }
     }
 
-    public void watchAtFixedRate() {
+    public void fetchAndWatch(){
+        fetchFromServer();
+        watchAtFixedRate();
+    }
+
+
+    /**
+     * 从服务端拉取配置
+     */
+    private void fetchFromServer(){
+        checkOrInitFetchExecutorService();
+        fetchExecutorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                Result<Config> result = fetchConfigService.fetch(getNamespace());
+                if (result.isSuccess()){
+                    Config config = result.getData();
+                    String data = config.getData();
+                    prepareOnReceiveConfigInfo(data);
+                    onReceiveConfigInfo(data);
+                }
+            }
+        });
+    }
+
+    private void watchAtFixedRate() {
         // 长轮训监听
+        final String clientKey = getApp() + ";" + getGrop()  + ";" + localIp;
         scheduledExecutorService.scheduleWithFixedDelay(new Runnable() {
             @Override
             public void run() {
                 SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 logger.info("{} watch [{}] on:{}", Thread.currentThread().getName(), getNamespace(), format.format(new Date()));
-                Result<Void> configResult = configService.watch(getNamespace());
+                Result<Void> configResult = configService.watch(getNamespace(), clientKey, HttpConstants.LONG_PULL_TIMEOUT_LONG_VALUE);
                 if (configResult.isNotSuccess()) {
                     logger.error("{} watch [{}] config from server, respnse:{}, on{}",Thread.currentThread().getName(), getNamespace(), configResult, format.format(new Date()));
                     return;
@@ -105,24 +144,6 @@ public abstract class ErosClientListener{
         if (StringUtils.isBlank(getNamespace())) {
             throw new ErosException(ErosError.BUSINIESS_ERROR, "namespace can not be empty...");
         }
-    }
-
-    /**
-     * 从服务端拉取配置
-     */
-    private void fetchFromServer(){
-        checkOrInitFetchExecutorService();
-        fetchExecutorService.execute(new Runnable() {
-            @Override
-            public void run() {
-                Result<String> result = fetchConfigService.watch(getNamespace());
-                if (result.isSuccess()){
-                    String data = result.getData();
-                    prepareOnReceiveConfigInfo(data);
-                    onReceiveConfigInfo(data);
-                }
-            }
-        });
     }
 
     private void checkOrInitFetchExecutorService(){
@@ -183,12 +204,13 @@ public abstract class ErosClientListener{
         }
         synchronized (lock) {
             // 获取classpath下所有实现了本抽象类的类型 并实例化
-            ErosFacadeLoader.loadListeners(ErosClientListener.class, ErosClientListener.class.getClassLoader());
+            FacadeLoader.loadListeners(ErosClientListener.class, ErosClientListener.class.getClassLoader());
             listenersLoaded = true;
         }
     }
 
     public static void nonListenerCallback() {
+        long beginTime = System.currentTimeMillis();
         synchronized (lock) {
             if (null != scheduledExecutorService && !scheduledExecutorService.isShutdown()) {
                 scheduledExecutorService.shutdown();
@@ -197,6 +219,7 @@ public abstract class ErosClientListener{
                 fetchExecutorService.shutdown();
             }
         }
+        logger.info("nonListenerCallback over, consuming total time(ms): {}", System.currentTimeMillis() - beginTime);
     }
 
 }

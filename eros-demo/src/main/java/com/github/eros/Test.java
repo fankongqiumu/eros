@@ -1,7 +1,6 @@
 package com.github.eros;
 
-import com.github.eros.client.init.ErosClientBootStrap;
-import com.github.eros.common.step.BootStrap;
+import com.github.eros.client.Client;
 
 /**
  * @author fankongqiumu
@@ -10,8 +9,7 @@ import com.github.eros.common.step.BootStrap;
  */
 public class Test {
     public static void main(String[] args) {
-        BootStrap strap = ErosClientBootStrap.newInstance();
-        strap.start();
+        Client.newInstance().start();
         for (;;){
 
         }

@@ -2,7 +2,11 @@ package com.github.eros.common.constant;
 
 public class HttpConstants {
 
-    public static final Integer LONG_PULL_TIMEOUT = 3000;
+    public static final int CONNECT_TIMEOUT = 3000;
+
+    public static final long LONG_PULL_TIMEOUT_LONG_VALUE = 60000L;
+
+    public static final int LONG_PULL_TIMEOUT_INT_VALUE = 60000;
 
     public enum HttpStatus {
         OK("200", "OK"),

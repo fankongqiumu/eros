@@ -1,7 +1,7 @@
 package com.github.eros.listener;
 
 import com.github.eros.client.listener.ErosClientListener;
-import com.github.eros.client.modle.user.UserInfo;
+import com.github.eros.domain.user.UserInfo;
 import com.github.eros.common.util.JsonUtils;
 
 import java.util.List;
@@ -36,8 +36,8 @@ public class UserErosListener extends ErosClientListener {
 
     @Override
     protected void onReceiveConfigInfo(String configData) {
-        if (null == configData || configData.isEmpty()) {
-            logger.error("can not find userInfoConfig:{} in server", userInfoConfig);
+        if (null == configData || configData.isEmpty() || JsonUtils.isBlank(configData)) {
+            logger.error("server configData is blank, userInfoConfig:{}", userInfoConfig);
             return;
         }
         try {

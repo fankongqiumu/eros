@@ -1,5 +1,8 @@
 package com.github.eros.common.lang;
 
+import com.github.eros.common.exception.ErosError;
+import com.github.eros.common.exception.ErosException;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
@@ -18,7 +21,7 @@ import java.util.Set;
  * @description TODO
  * @date 2021/12/20 15:51
  */
-public class ErosFacadeLoader {
+public class FacadeLoader {
 
     public static final String FACADE_RESOURCE_LOCATION = "META-INF/facade.properties";
 
@@ -26,7 +29,7 @@ public class ErosFacadeLoader {
         Objects.requireNonNull(facadeClass, "'facadeClass' must not be null");
         ClassLoader classLoaderToUse = classLoader;
         if (classLoaderToUse == null) {
-            classLoaderToUse = ErosFacadeLoader.class.getClassLoader();
+            classLoaderToUse = FacadeLoader.class.getClassLoader();
         }
         Set<String> facadeClassNames = loadFacadeNames(facadeClass, classLoaderToUse);
         if (facadeClassNames.isEmpty()) {
@@ -43,14 +46,15 @@ public class ErosFacadeLoader {
         try {
             Class<?> instanceClass = Class.forName(instanceClassName, false, classLoader);
             if (!facadeClass.isAssignableFrom(instanceClass)) {
-                throw new IllegalArgumentException(
+                throw new ErosException(ErosError.SYSTEM_ERROR,
                         "Class [" + instanceClassName + "] is not assignable to [" + facadeClass.getName() + "]");
             }
             Constructor<?> constructor = instanceClass.getDeclaredConstructor();
             constructor.setAccessible(true);
             return (T) constructor.newInstance();
-        } catch (Throwable ex) {
-            throw new IllegalArgumentException("Unable to instantiate facade class: " + facadeClass.getName(), ex);
+        } catch (Throwable e) {
+            throw new ErosException(ErosError.SYSTEM_ERROR,
+                    "Unable to instantiate facade class: " + facadeClass.getName(), e);
         }
     }
 
@@ -58,13 +62,13 @@ public class ErosFacadeLoader {
     public static Set<String> loadFacadeNames(Class<?> facadeClass, ClassLoader classLoader) {
         String facadeClasssName = facadeClass.getName();
         try {
-            Enumeration<URL> urls = (classLoader != null ? classLoader.getResources(FACADE_RESOURCE_LOCATION) :
-                    ClassLoader.getSystemResources(FACADE_RESOURCE_LOCATION));
+            Enumeration<URL> urls = (classLoader != null
+                    ? classLoader.getResources(FACADE_RESOURCE_LOCATION)
+                    : ClassLoader.getSystemResources(FACADE_RESOURCE_LOCATION));
             Set<String> result = new HashSet<>();
             while (urls.hasMoreElements()) {
                 URL url = urls.nextElement();
-                InputStream inputStream = url.openStream();
-                Properties properties = loadProperties(inputStream);
+                Properties properties = loadProperties(url);
                 if (properties.isEmpty()){
                     continue;
                 }
@@ -74,27 +78,24 @@ public class ErosFacadeLoader {
                 }
             }
             return result;
-        } catch (IOException ex) {
-            throw new IllegalArgumentException("Unable to load factories from location [" +
-                    FACADE_RESOURCE_LOCATION + "]", ex);
+        } catch (IOException e) {
+            throw new ErosException(ErosError.SYSTEM_ERROR,
+                    "Unable to load factories from location [" + FACADE_RESOURCE_LOCATION + "]", e);
         }
     }
 
-    public static Properties loadProperties(InputStream inputStream) throws IOException {
+    public static Properties loadProperties(URL url) throws IOException {
         Properties props = new Properties();
-        fillProperties(props, inputStream);
+        fillProperties(props, url);
         return props;
     }
 
 
-    public static void fillProperties(Properties props, InputStream inputStream) throws IOException {
-        try {
+    public static void fillProperties(Properties props, URL url) throws IOException {
+        try(InputStream inputStream = url.openStream()){
             props.load(inputStream);
-        } finally {
-            inputStream.close();
+        } catch (Throwable throwable) {
+            throw new ErosException(ErosError.SYSTEM_ERROR, throwable);
         }
     }
-
-
-
 }

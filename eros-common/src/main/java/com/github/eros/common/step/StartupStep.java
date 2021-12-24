@@ -13,6 +13,10 @@ public interface StartupStep extends Ordered {
 
     StepState getState();
 
+    /**
+     * 初始化的时候 如果存在多个getName()相同的，将会启动失败
+     * @return
+     */
     default String getName() {
        return Introspector.decapitalize(this.getClass().getSimpleName());
     }

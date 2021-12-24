@@ -3,12 +3,12 @@ package com.github.eros.client.forest;
 import com.dtflys.forest.callback.AddressSource;
 import com.dtflys.forest.http.ForestAddress;
 import com.dtflys.forest.http.ForestRequest;
-import org.apache.commons.lang3.math.NumberUtils;
+import com.github.eros.common.constant.Contants;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class WatchAddressSource implements AddressSource {
+public class ClientAddressSource implements AddressSource {
 
     private static final List<ForestAddress> WATCH_ADDRESS_HOLDER = new ArrayList<>(16);
 
@@ -21,7 +21,7 @@ public class WatchAddressSource implements AddressSource {
         if (WATCH_ADDRESS_HOLDER.isEmpty()){
             loadAddress();
         }
-        return WATCH_ADDRESS_HOLDER.get(NumberUtils.INTEGER_ZERO);
+        return WATCH_ADDRESS_HOLDER.get(Contants.INTEGER_ZERO);
     }
 
     public void  loadAddress(){

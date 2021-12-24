@@ -5,7 +5,7 @@ import java.io.Serializable;
 /**
  * @author fankongqiumu
  * @description 统一返回
- * @date 2021/12/17 14:12
+ * @date 2021/12/17 22:12
  */
 public class Result<Target> implements Serializable {
     private static final long serialVersionUID = 6901051158611202215L;
@@ -23,16 +23,11 @@ public class Result<Target> implements Serializable {
 
     private String msgInfo;
 
-    private RespInfoEnum msgTemplate;
-
     /**
      * 兼容依赖msgCode 的接口, 如mtop的错误码
      *
      */
     public String getMsgCode() {
-        if (null == this.msgCode && msgTemplateNonNull()) {
-            this.msgCode = this.msgTemplate.getCode();
-        }
         return this.msgCode;
     }
 
@@ -41,19 +36,11 @@ public class Result<Target> implements Serializable {
      *
      */
     public String getMsgInfo() {
-        if (null == this.msgInfo && msgTemplateNonNull()) {
-            this.msgInfo = this.msgTemplate.getMessage();
-        }
         return this.msgInfo;
-    }
-
-    public void setMsgTemplate(RespInfoEnum msgTemplate) {
-        this.msgTemplate = msgTemplate;
     }
 
     public void setSuccessTrue() {
         this.success = true;
-        this.setMsgTemplate(RespInfoEnum.SUCCESS);
     }
 
     public Target getData() {
@@ -99,7 +86,6 @@ public class Result<Target> implements Serializable {
     public static <Target> Result<Target> createFailWith(String errorCode, String errorMsg) {
         Result<Target> result = Result.create();
         result.setSuccess(false);
-        result.setMsgTemplate(RespInfoEnum.ERROR);
         result.msgInfo = errorMsg;
         result.msgCode = errorCode;
         return result;
@@ -129,9 +115,6 @@ public class Result<Target> implements Serializable {
         return !success;
     }
 
-    public boolean msgTemplateNonNull() {
-        return null != this.msgTemplate;
-    }
 
     public void setSuccess(boolean success) {
         this.success = success;

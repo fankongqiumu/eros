@@ -1,55 +1,51 @@
-package com.github.eros.controller;
+package com.github.eros.controller.client;
 
+import com.github.eros.async.Constants;
 import com.github.eros.common.constant.HttpConstants;
 import com.github.eros.common.model.Result;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.DeferredResult;
 
 import javax.servlet.http.HttpServletRequest;
-import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.Collection;
-import java.util.Date;
 
 @RequestMapping("/async")
 @RestController
-public class AsyncRequestController {
+public class AsyncWatchController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    //guava中的Multimap，多值map,对map的增强，一个key可以保持多个value
+    /**
+     * guava中的Multimap，多值map,对map的增强，一个key可以保持多个value
+     */
     private Multimap<String, DeferredResult<Result<Void>>> watchRequests = Multimaps.synchronizedSetMultimap(HashMultimap.create());
 
-    //长轮询
+    /**
+     * 长轮询
+     * @param namespace
+     * @param request
+     * @return
+     */
     @RequestMapping(value = "/watch/{namespace}", method = RequestMethod.GET)
-    public DeferredResult<Result<Void>> watch(@PathVariable("namespace") String namespace, HttpServletRequest request) {
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    public DeferredResult<Result<Void>> watch(@PathVariable("namespace") String namespace,
+                                              @RequestParam("clientKey") String clientKey,
+                                              @RequestParam(name = "timeout", required = false) Long timeout,
+                                              HttpServletRequest request) {
+
         DeferredResult<Result<Void>> deferredResult;
-        String timeout = request.getHeader("timeout");
-        String requestId = request.getHeader("requestId");
-        if (!StringUtils.isNumeric(timeout) || StringUtils.isBlank(requestId)){
-            deferredResult = new DeferredResult<>();
-            Result<Void> noTimeoutHeader = Result.createFailWith("500", "no timeout or requestId header");
-            deferredResult.setErrorResult(noTimeoutHeader);
-            return deferredResult;
-        }
-        logger.info("{} watch config on:{}", requestId, format.format(new Date()));
+        logger.info("{} watch {} on:{}", clientKey, namespace, LocalDateTime.now());
         logger.info("Request received");
-        long timeoutLong = Long.parseLong(timeout);
-        timeoutLong = ((timeoutLong/100)*90);
-        deferredResult = new DeferredResult<>(timeoutLong);
+        deferredResult = new DeferredResult<>(getTimeout(timeout));
         //当deferredResult完成时（不论是超时还是异常还是正常完成），移除watchRequests中相应的watch key
         deferredResult.onCompletion(new Runnable() {
             @Override
             public void run() {
-                System.out.println("remove key:" + namespace);
+                logger.info("remove key:[{}] ", namespace);
                 watchRequests.remove(namespace, deferredResult);
             }
         });
@@ -57,8 +53,7 @@ public class AsyncRequestController {
         deferredResult.onTimeout(new Runnable() {
             @Override
             public void run() {
-                logger.info("[{}] watch config Timeout:{}", requestId, format.format(new Date()));
-                System.out.println("key:" + namespace + "Timeout");
+                logger.info("[{}] watch [{}] Timeout:{}", clientKey, namespace, LocalDateTime.now());
                 Result<Void> noContent = Result.createSuccess();
                 noContent.setMsgCode(String.valueOf(HttpConstants.HttpStatus.NOT_MODIFIED.getCode()));
                 noContent.setMsgInfo(HttpConstants.HttpStatus.NOT_MODIFIED.getReasonPhrase());
@@ -71,9 +66,14 @@ public class AsyncRequestController {
         return deferredResult;
     }
 
-    @Async
-    //发布namespace配置
-    @RequestMapping(value = "/publish/{namespace}", method = RequestMethod.GET)
+
+    /**
+     * 发布namespace配置
+     * @param namespace
+     * @return
+     */
+    @Async(Constants.ASYNC_EXECUTOR)
+    @RequestMapping(value = "/publish/{namespace}", method = RequestMethod.GET, produces = {"application/json"})
     public Result publishConfig(@PathVariable("namespace") String namespace) {
         if (watchRequests.containsKey(namespace)) {
             Collection<DeferredResult<Result<Void>>> deferredResults = watchRequests.get(namespace);
@@ -83,9 +83,17 @@ public class AsyncRequestController {
                 Result<Void> result = Result.createSuccess();
                 result.setMsgCode(HttpConstants.HttpStatus.CONTENT_MODIFIED.getCode());
                 result.setMsgInfo(HttpConstants.HttpStatus.CONTENT_MODIFIED.getCode());
+                deferredResult.setResult(result);
             }
         }
         return Result.createSuccess();
+    }
+
+    private Long getTimeout(Long timout){
+        if (null == timout) {
+            return HttpConstants.LONG_PULL_TIMEOUT_LONG_VALUE;
+        }
+        return ((timout/100)*90);
     }
 
 }

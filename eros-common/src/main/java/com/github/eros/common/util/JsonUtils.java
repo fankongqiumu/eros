@@ -6,9 +6,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author fankongqiumu
@@ -16,6 +14,14 @@ import java.util.Map;
  * @date 2021/12/21 20:05
  */
 public class JsonUtils {
+
+    private static final Set<String> BLANK_JSON;
+
+    static {
+        BLANK_JSON = new HashSet<>();
+        BLANK_JSON.add("[]");
+        BLANK_JSON.add("{}");
+    }
 
     private JsonUtils(){
         throw new ErosException(ErosError.SYSTEM_ERROR, "not support constructor instance");
@@ -37,5 +43,9 @@ public class JsonUtils {
 
     public static <K,V> Map<K,V> parseMap(String jsonString, Class<K> classOfK,  Class<V> classOfV) {
         return GSON.fromJson(jsonString, new TypeToken<HashMap<K,V>>(){}.getType());
+    }
+
+    public static boolean isBlank(String jsonString){
+        return BLANK_JSON.contains(jsonString);
     }
 }

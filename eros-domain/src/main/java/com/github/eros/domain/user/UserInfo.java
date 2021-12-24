@@ -1,26 +1,29 @@
-package com.github.eros.entry;
+package com.github.eros.domain.user;
 
-import com.github.eros.common.model.BaseObject;
+import com.github.eros.domain.BaseObject;
 
 /**
  * @author fankongqiumu
  * @description
- * @date 2021/12/20 02:20
+ * @date 2021/12/17 14:14
  */
 public class UserInfo extends BaseObject {
-    private Integer id;
+    private Long id;
     private String name;
 
-    public UserInfo(Integer id, String name) {
+    public UserInfo() {
+    }
+
+    public UserInfo(Long id, String name) {
         this.id = id;
         this.name = name;
     }
 
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

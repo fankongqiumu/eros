@@ -10,6 +10,7 @@
         <module>eros-web</module>
         <module>eros-user</module>
         <module>eros-demo</module>
+        <module>eros-domain</module>
     </modules>
     <groupId>com.github.eros</groupId>
     <artifactId>eros</artifactId>
@@ -25,6 +26,7 @@
 
         <eros-common.version>0.0.1-SNAPSHOT</eros-common.version>
         <eros-client.version>0.0.1-SNAPSHOT</eros-client.version>
+        <eros-domain.version>0.0.1-SNAPSHOT</eros-domain.version>
         <eros-server.version>0.0.1-SNAPSHOT</eros-server.version>
         <eros-web.version>0.0.1-SNAPSHOT</eros-web.version>
 
@@ -44,6 +46,11 @@
                 <groupId>com.github.eros</groupId>
                 <artifactId>eros-client</artifactId>
                 <version>${eros-client.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.eros</groupId>
+                <artifactId>eros-domain</artifactId>
+                <version>${eros-domain.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.github.eros</groupId>
@@ -100,6 +107,12 @@
             </dependency>
 
             <dependency>
+                <groupId>org.ow2.asm</groupId>
+                <artifactId>asm-all</artifactId>
+                <version>5.0.4</version>
+            </dependency>
+
+            <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
                 <version>3.5</version>
@@ -141,6 +154,11 @@
                 <groupId>org.mybatis.spring.boot</groupId>
                 <artifactId>mybatis-spring-boot-starter</artifactId>
                 <version>${mybatis-spring-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-devtools</artifactId>
+                <version>${spring-boot.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

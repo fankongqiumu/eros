@@ -1,5 +1,3 @@
-import retrofit2.Call;
-
 /**
  * @author fankongqiumu
  * @description TODO

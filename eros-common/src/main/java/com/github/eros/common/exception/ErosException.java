@@ -29,6 +29,12 @@ public class ErosException extends RuntimeException {
         this.bizErrorMessage = bizErrorMessage;
     }
 
+    public ErosException(ErosError erosError, Throwable cause){
+        super(cause);
+        Objects.requireNonNull(erosError);
+        this.erosError = erosError;
+    }
+
     public ErosError getErosError() {
         return erosError;
     }
