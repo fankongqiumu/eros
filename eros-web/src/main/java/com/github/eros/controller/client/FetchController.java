@@ -14,8 +14,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 
+/**
+ * @author fankongqiumu
+ * @description
+ * @date 2021/12/25 00:17
+ */
 @RestController
-public class AsyncFetchController {
+public class FetchController {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 

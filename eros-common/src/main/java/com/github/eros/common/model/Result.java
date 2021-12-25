@@ -1,5 +1,7 @@
 package com.github.eros.common.model;
 
+import com.github.eros.common.constant.HttpConstants;
+
 import java.io.Serializable;
 
 /**

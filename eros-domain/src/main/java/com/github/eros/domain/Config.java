@@ -5,6 +5,9 @@ public class Config extends BaseObject{
      * 所有的配置都是json格式的字符串
      */
     private String data;
+    private String app;
+    private String group;
+    private String namespace;
     private Long lastModified;
     private String checkMd5;
 
@@ -17,6 +20,30 @@ public class Config extends BaseObject{
 
     public void setData(String data) {
         this.data = data;
+    }
+
+    public String getApp() {
+        return app;
+    }
+
+    public void setApp(String app) {
+        this.app = app;
+    }
+
+    public String getGroup() {
+        return group;
+    }
+
+    public void setGroup(String group) {
+        this.group = group;
+    }
+
+    public String getNamespace() {
+        return namespace;
+    }
+
+    public void setNamespace(String namespace) {
+        this.namespace = namespace;
     }
 
     public Long getLastModified() {

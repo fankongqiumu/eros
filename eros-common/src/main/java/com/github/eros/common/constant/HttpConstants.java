@@ -1,5 +1,10 @@
 package com.github.eros.common.constant;
 
+/**
+ * @author fankongqiumu
+ * @description
+ * @date 2021/12/24 23:09
+ */
 public class HttpConstants {
 
     public static final int CONNECT_TIMEOUT = 3000;
