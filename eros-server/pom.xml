@@ -28,6 +28,11 @@
             </exclusions>
         </dependency>
         <dependency>
+            <groupId>com.github.nameserver</groupId>
+            <artifactId>nameserver-client</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
         </dependency>
@@ -68,6 +73,28 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
+        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.dtflys.forest</groupId>-->
+<!--            <artifactId>spring-boot-starter-forest</artifactId>-->
+<!--            <exclusions>-->
+<!--                <exclusion>-->
+<!--                    <groupId>*</groupId>-->
+<!--                    <artifactId>*</artifactId>-->
+<!--                </exclusion>-->
+<!--            </exclusions>-->
+<!--        </dependency>-->
+        <dependency>
+            <groupId>com.dtflys.forest</groupId>
+            <artifactId>forest-core</artifactId>
+        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.dtflys.forest</groupId>-->
+<!--            <artifactId>forest-spring</artifactId>-->
+<!--        </dependency>-->
+        <dependency>
+            <groupId>com.dtflys.forest</groupId>
+            <artifactId>forest-core</artifactId>
         </dependency>
     </dependencies>
 </project>

@@ -29,7 +29,9 @@
         <eros-domain.version>0.0.1-SNAPSHOT</eros-domain.version>
         <eros-server.version>0.0.1-SNAPSHOT</eros-server.version>
         <eros-web.version>0.0.1-SNAPSHOT</eros-web.version>
+        <nameserver.client.version>1.0-SNAPSHOT</nameserver.client.version>
 
+        <forest-spring-boot.version>1.5.0-RC5</forest-spring-boot.version>
         <spring-boot.version>2.5.7</spring-boot.version>
         <mybatis-spring-boot.version>2.1.4</mybatis-spring-boot.version>
         <joda.version>2.9.9</joda.version>
@@ -72,6 +74,11 @@
                 <artifactId>eros-demo</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.github.nameserver</groupId>
+                <artifactId>nameserver-client</artifactId>
+                <version>${nameserver.client.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>ch.qos.logback</groupId>
@@ -95,8 +102,24 @@
 
             <dependency>
                 <groupId>com.dtflys.forest</groupId>
+                <artifactId>spring-boot-starter-forest</artifactId>
+                <version>${forest-spring-boot.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>*</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>com.dtflys.forest</groupId>
                 <artifactId>forest-core</artifactId>
-                <version>1.5.16</version>
+                <version>1.5.9</version>
+            </dependency>
+            <dependency>
+                <groupId>com.dtflys.forest</groupId>
+                <artifactId>forest-spring</artifactId>
+                <version>1.5.9</version>
             </dependency>
 
             <!-- ReflectASM反射工具包 -->

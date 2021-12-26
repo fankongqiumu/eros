@@ -11,7 +11,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnNotWebAppli
  */
 @SpringBootApplication
 @ConditionalOnNotWebApplication
-public class ServerBootStrap {
+public class ServerBootStrap{
     public static void main(String[] args) {
         SpringApplication.run(ServerBootStrap.class, args);
     }
