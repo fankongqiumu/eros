@@ -9,14 +9,18 @@ import org.springframework.context.ApplicationEvent;
  */
 public class ConfigModifySyncEvent extends ApplicationEvent {
 
-    private final String namespace;
+    private final ModifySyncEventObj modifySyncEventObj;
 
-    public ConfigModifySyncEvent(String namespace) {
-        super(namespace);
-        this.namespace = namespace;
+    public ConfigModifySyncEvent(final ModifySyncEventObj modifySyncEventObj) {
+        super(modifySyncEventObj);
+        this.modifySyncEventObj = modifySyncEventObj;
     }
 
     public String getNamespace() {
-        return namespace;
+        return modifySyncEventObj.getNamespace();
+    }
+
+    public Long getLastModified() {
+        return modifySyncEventObj.getLastModified();
     }
 }

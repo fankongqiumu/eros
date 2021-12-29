@@ -38,7 +38,6 @@ public class ConfigManageController {
      * @param config
      * @return
      */
-    @Async(Constants.ASYNC_EXECUTOR)
     @PostMapping(value = "/publish")
     public HttpResult<Void> publish(@RequestBody Config config) {
         configInfoManageService.publish(config);

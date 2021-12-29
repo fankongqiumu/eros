@@ -2,9 +2,10 @@ package com.github.eros.server.service.manage;
 
 import com.github.eros.domain.Config;
 import com.github.eros.server.cache.ConfigLocalCache;
-import com.github.eros.server.cache.EventCache;
 import com.github.eros.server.event.ConfigModifyEvent;
 import com.github.eros.server.event.ConfigModifySyncEvent;
+import com.github.eros.server.event.ConfigModifySyncEventPool;
+import com.github.eros.server.event.ModifySyncEventObj;
 import com.github.eros.server.service.ConfigInfoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,10 +35,10 @@ public class ConfigInfoManageService {
     private ApplicationEventPublisher eventPublisher;
 
     @Autowired
-    private EventCache eventCache;
+    private ConfigLocalCache configLocalCache;
 
     @Autowired
-    private ConfigLocalCache configLocalCache;
+    private ConfigModifySyncEventPool configModifySyncEventPool;
 
 
     public void publish(@NonNull Config config){
@@ -63,7 +64,12 @@ public class ConfigInfoManageService {
 
     @Async("asyncEventTaskExecutor")
     public void configModifiedSync(String namespace) {
-        eventPublisher.publishEvent(new ConfigModifySyncEvent(namespace));
+        Config config = configLocalCache.get(namespace);
+        ConfigModifySyncEvent configModifySyncEvent = new ConfigModifySyncEvent(
+                new ModifySyncEventObj(namespace, config.getLastModified())
+        );
+        configModifySyncEventPool.modifySyncEventCache(configModifySyncEvent);
+        eventPublisher.publishEvent(configModifySyncEvent);
     }
 
     @Async("asyncEventTaskExecutor")

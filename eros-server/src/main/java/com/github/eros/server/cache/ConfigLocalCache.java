@@ -36,7 +36,7 @@ public class ConfigLocalCache {
                 logger.info(notification.getKey() + " " + notification.getValue() + " 被移除,原因:" + notification.getCause());
             })
             //build方法中可以指定CacheLoader，在缓存不存在时通过CacheLoader的实现自动加载缓存
-            .build(new DemoCacheLoader());
+            .build(new ConfigCacheLoader());
 
 
     public Config get(String namespace) {
@@ -55,7 +55,7 @@ public class ConfigLocalCache {
     /**
      * 随机缓存加载,实际使用时应实现业务的缓存加载逻辑,例如从数据库获取数据
      */
-    public static class DemoCacheLoader extends CacheLoader<String, Config> {
+    public static class ConfigCacheLoader extends CacheLoader<String, Config> {
         @Override
         public Config load(String key) throws Exception {
             System.out.println(Thread.currentThread().getName() + " 加载数据开始");

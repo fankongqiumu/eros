@@ -8,13 +8,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
+
 @RestController
 public class HealthCheckController {
     private static final Logger logger = LoggerFactory.getLogger(ConfigLocalCache.class);
 
     @GetMapping(UriConstants.HEALTH_CHECK_PATH)
-    public String healthCheckController(){
-        logger.info("nameserver healthCheck done...");
+    public String healthCheckController(HttpServletRequest httpServletRequest){
+        String remoteAddr = httpServletRequest.getRemoteAddr();
+        String remoteHost = httpServletRequest.getRemoteHost();
+        logger.info("healthCheck done from {}...", remoteHost);
         return HttpConstants.HttpStatus.OK.getReasonPhrase();
     }
 }
