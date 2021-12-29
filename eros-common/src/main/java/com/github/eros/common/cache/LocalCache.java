@@ -1,4 +1,4 @@
-package com.github.eros.server.cache;
+package com.github.eros.common.cache;
 
 import com.github.eros.common.lang.DefaultThreadFactory;
 
@@ -24,7 +24,6 @@ public class LocalCache<K, V> {
             this.cacheEngine = new SimpleCache(initialCapacity);
         }
     }
-
 
     public V get(K key) {
         return this.cacheEngine.get(key);

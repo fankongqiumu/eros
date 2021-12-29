@@ -1,6 +1,6 @@
 package com.github.eros.server.event;
 
-import com.github.eros.server.cache.LocalCache;
+import com.github.eros.common.cache.LocalCache;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;

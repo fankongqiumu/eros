@@ -1,6 +1,6 @@
 package com.github.eros.server.config;
 
-import com.github.eros.server.cache.LocalCache;
+import com.github.eros.common.cache.LocalCache;
 import com.github.eros.server.event.ConfigModifySyncEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
