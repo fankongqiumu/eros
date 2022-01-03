@@ -1,6 +1,6 @@
 package com.github.eros.interceptor;
 
-import com.github.eros.common.model.Result;
+import com.github.eros.common.lang.Result;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;

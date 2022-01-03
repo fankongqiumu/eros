@@ -1,6 +1,6 @@
 package com.github.eros.server.event;
 
-import com.github.eros.domain.BaseObject;
+import com.github.eros.common.model.BaseObject;
 
 
 public class ModifySyncEventObj extends BaseObject {

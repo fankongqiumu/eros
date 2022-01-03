@@ -1,35 +1,42 @@
 package com.github.eros.cache;
 
-import com.github.eros.common.model.Result;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
+import com.github.eros.common.cache.ExpireCallBack;
+import com.github.eros.common.cache.MultiLocalCache;
+import com.github.eros.common.constant.HttpConstants;
+import com.github.eros.common.lang.Result;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.async.DeferredResult;
 
-import java.util.Collection;
+import java.util.List;
 
 @Component
 public class WatchResultCache {
 
-    /**
-     * guava中的Multimap，多值map,对map的增强，一个key可以保持多个value
-     */
-    private Multimap<String, DeferredResult<Result<Void>>> watchResults = Multimaps.synchronizedSetMultimap(HashMultimap.create());
+    private final MultiLocalCache<String, DeferredResult<Result<Void>>> watchResults = MultiLocalCache.buildMultiLRULocalCache(
+            2048, 60000L, new ExpireCallBack<String, DeferredResult<Result<Void>>>() {
+                @Override
+                public void callBack(String key, DeferredResult<Result<Void>> data) {
+                    // todo 让客户端去连接负载较小的服务器
+                    Result<Void> noContent = Result.createSuccess();
+                    noContent.setMsgCode(String.valueOf(HttpConstants.HttpStatus.SERVER_BUSY.getCode()));
+                    noContent.setMsgInfo(HttpConstants.HttpStatus.SERVER_BUSY.getReasonPhrase());
+                    data.setResult(noContent);
+                }
+            });
 
     public void add(String namespace, DeferredResult<Result<Void>> deferredResult){
         watchResults.put(namespace, deferredResult);
     }
 
     public void remove(String namespace, DeferredResult<Result<Void>> deferredResult){
-        watchResults.remove(namespace, deferredResult);
+       watchResults.remove(namespace, deferredResult);
     }
 
     public boolean containNamespace(String namespace) {
         return watchResults.containsKey(namespace);
     }
 
-    public Collection<DeferredResult<Result<Void>>> getByNameSpace(String namespace){
+    public List<DeferredResult<Result<Void>>> getByNameSpace(String namespace){
         return watchResults.get(namespace);
     }
 

@@ -1,6 +1,6 @@
 package com.github.eros.controller.user;
 
-import com.github.eros.domain.user.UserInfo;
+import com.github.eros.server.model.UserInfo;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 

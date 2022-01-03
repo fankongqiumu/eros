@@ -1,9 +1,9 @@
 package com.github.eros.controller.config;
 
-import com.github.eros.common.model.Result;
+import com.github.eros.common.lang.Result;
 import com.github.eros.common.util.JsonUtils;
 import com.github.eros.controller.user.UserInfoHolder;
-import com.github.eros.domain.user.UserInfo;
+import com.github.eros.server.model.UserInfo;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;

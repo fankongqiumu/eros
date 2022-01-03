@@ -1,6 +1,8 @@
 package com.github.eros.common.cache;
 
 import com.github.eros.common.lang.DefaultThreadFactory;
+import com.github.eros.common.lang.DoubleList;
+import com.github.eros.common.lang.Node;
 
 import java.util.LinkedHashMap;
 import java.util.concurrent.ScheduledExecutorService;
@@ -13,11 +15,11 @@ public class LocalCache<K, V> {
 
     private final CacheEngine<K, V> cacheEngine;
 
-    private LocalCache(int initialCapacity, boolean sync, boolean lru, long expireAfterWrite) {
+    protected LocalCache(int initialCapacity, boolean sync, boolean lru, long expireAfterWrite, ExpireCallBack<K, V>...expireCallBacks) {
         if (lru){
-            this.cacheEngine = new ExpireableWithLRUCache(initialCapacity, Long.MIN_VALUE);
+            this.cacheEngine = new ExpireableWithLRUCache(initialCapacity, Long.MIN_VALUE, expireCallBacks);
         } else if (sync && expireAfterWrite > 0L){
-            this.cacheEngine = new ExpireableCache(initialCapacity, expireAfterWrite);
+            this.cacheEngine = new ExpireableCache(initialCapacity, expireAfterWrite, expireCallBacks);
         } else if (sync) {
             this.cacheEngine = new SimpleSynCache(initialCapacity);
         } else {
@@ -27,6 +29,10 @@ public class LocalCache<K, V> {
 
     public V get(K key) {
         return this.cacheEngine.get(key);
+    }
+
+    public boolean containsKey(K key) {
+        return this.cacheEngine.containsKey(key);
     }
 
     /**
@@ -57,37 +63,27 @@ public class LocalCache<K, V> {
         return this.cacheEngine.getSize();
     }
 
-    public static <K, V> LocalCache<K, V> buildSimpleCache(int initialCapacity, Class<K> classOfKey, Class<V> classOfData){
+    public static <K, V> LocalCache<K, V> buildSimpleCache(int initialCapacity){
         return new LocalCache<>(initialCapacity, false, false, Long.MIN_VALUE);
     }
 
-    public static <K, V> LocalCache<K, V> buildSimpleSynCache(int initialCapacity, Class<K> classOfKey, Class<V> classOfData){
+    public static <K, V> LocalCache<K, V> buildSimpleSynCache(int initialCapacity){
         return new LocalCache<>(initialCapacity, true, false, Long.MIN_VALUE);
     }
 
-    public static <K, V> LocalCache<K, V> buildExpireableCache(int initialCapacity, long expireAfterWrite,  Class<K> classOfKey, Class<V> classOfData) {
+    public static <K, V> LocalCache<K, V> buildExpireableCache(int initialCapacity, long expireAfterWrite) {
         return new LocalCache<>(initialCapacity, true, false, expireAfterWrite);
     }
 
-    public static <K, V> LocalCache<K, V> buildLRUCache(int initialCapacity,  Class<K> classOfKey, Class<V> classOfData) {
+    public static <K, V> LocalCache<K, V> buildLRUCache(int initialCapacity) {
         return new LocalCache<>(initialCapacity, true, true, Long.MIN_VALUE);
     }
 
-    private interface CacheEngine<K, V> {
-        V get(K key);
-
-        Long getlastModified(K key);
-
-        void put(K key, V data);
-
-        default void putPlus(K key, V data, long lastModified){
-            put(key, data);
-        }
-
-        int  getSize();
+    public static <K, V> LocalCache<K, V> buildLRUCacheWithExpireCallBack(int initialCapacity, ExpireCallBack expireCallBack) {
+        return new LocalCache<>(initialCapacity, true, true, Long.MIN_VALUE);
     }
 
-    private class SimpleCache implements CacheEngine<K, V>{
+    protected class SimpleCache implements CacheEngine<K, V>{
 
         protected final LinkedHashMap<K, V> cacheTabe;
 
@@ -105,6 +101,11 @@ public class LocalCache<K, V> {
             return null;
         }
 
+        @Override
+        public boolean containsKey(K key) {
+            return cacheTabe.containsKey(key);
+        }
+
 
         @Override
         public void put(K key, V data) {
@@ -117,7 +118,7 @@ public class LocalCache<K, V> {
         }
     }
 
-    private class SimpleSynCache extends SimpleCache{
+    protected class SimpleSynCache extends SimpleCache{
         private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
         private final ReentrantReadWriteLock.ReadLock readLock = readWriteLock.readLock();
         private final ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
@@ -153,9 +154,10 @@ public class LocalCache<K, V> {
 
     }
 
-    private class ExpireableCache implements CacheEngine<K, V>, Runnable{
-        protected final LinkedHashMap<K, Node> cacheTabe;
-        protected final DoubleList cacheDoubleList;
+    protected class ExpireableCache implements CacheEngine<K, V>, Runnable{
+        protected final LinkedHashMap<K, Node<K, V>> cacheTabe;
+        protected final DoubleList<K, V> cacheDoubleList;
+        protected final ExpireCallBack<K, V>[] expireCallBacks;
         /**
          * 过期时间 TimeUnit.MILLISECONDS
          */
@@ -172,10 +174,11 @@ public class LocalCache<K, V> {
          * @param initialCapacity 暂时没啥用
          * @param expireAfterWrite 小于等于0L 表示不需要过期， 大于0会在指定毫秒值后过期
          */
-        public ExpireableCache(int initialCapacity, long expireAfterWrite) {
+        public ExpireableCache(int initialCapacity, long expireAfterWrite, ExpireCallBack<K, V>... expireCallBacks) {
             this.cacheTabe = new LinkedHashMap<>(initialCapacity);
-            this.cacheDoubleList = new DoubleList();
+            this.cacheDoubleList = new DoubleList<>();
             this.expireAfterWrite = expireAfterWrite;
+            this.expireCallBacks = expireCallBacks;
             if (expireAfterWrite <= 0L) {
                 scheduledExecutorService = null;
             } else {
@@ -183,33 +186,55 @@ public class LocalCache<K, V> {
                         DefaultThreadFactory.defaultThreadFactory("localCache-expire-thread")
                 );
                 scheduledExecutorService.scheduleAtFixedRate(this, 1, 10, TimeUnit.SECONDS);
+                Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+                    private volatile boolean hasShutdown = false;
+                    @Override
+                    public void run() {
+                        synchronized (ExpireableCache.class) {
+                            if (!this.hasShutdown) {
+                                this.hasShutdown = true;
+                                long beginTime = System.currentTimeMillis();
+                                if (!scheduledExecutorService.isShutdown()){
+                                    scheduledExecutorService.shutdown();
+                                }
+                                long consumingTimeTotal = System.currentTimeMillis() - beginTime;
+                                System.out.println("Shutdown hook over, consuming total time(ms):" + consumingTimeTotal);
+                            }
+                        }
+                    }
+                }, "ShutdownHook"));
             }
         }
 
         @Override
         public V get(K key) {
-            Node node = cacheTabe.get(key);
+            Node<K, V> node = cacheTabe.get(key);
             if (null != node) {
-                if (node.hasExpire()) {
+                if (node.hasExpire(expireAfterWrite)) {
                     expire(key);
                     return null;
                 }
-                return node.data;
+                return node.getData();
             }
             return null;
         }
 
         @Override
         public Long getlastModified(K key){
-            Node node = cacheTabe.get(key);
+            Node<K, V> node = cacheTabe.get(key);
             if (null != node) {
-                if (node.hasExpire()) {
+                if (node.hasExpire(expireAfterWrite)) {
                     expire(key);
                     return null;
                 }
-                return node.lastModified;
+                return node.getLastModified();
             }
             return null;
+        }
+
+        @Override
+        public boolean containsKey(K key) {
+            return cacheTabe.containsKey(key);
         }
 
         /**
@@ -234,7 +259,7 @@ public class LocalCache<K, V> {
         public void putPlus(K key, V data, long lastModified) {
             readLock.lock();
             try {
-                Node node = cacheTabe.get(key);
+                Node<K, V> node = cacheTabe.get(key);
                 if (null != node && !node.hasExpire(lastModified)) {
                     return;
                 }
@@ -246,7 +271,7 @@ public class LocalCache<K, V> {
 
         @Override
         public int getSize() {
-            return cacheDoubleList.size;
+            return cacheDoubleList.getSize();
         }
 
         private void innerSyncCache(K key, V data, Long lastModified) {
@@ -255,9 +280,9 @@ public class LocalCache<K, V> {
             }
             writeLock.lock();
             try {
-                Node node = new Node(key, data, lastModified);
+                Node<K, V> node = new Node<>(key, data, lastModified);
                 node = cacheDoubleList.addFirst(node);
-                cacheTabe.put(node.key, node);
+                cacheTabe.put(node.getKey(), node);
             } finally {
                 checkAndSignalAllWaitCondition();
                 writeLock.unlock();
@@ -290,12 +315,18 @@ public class LocalCache<K, V> {
             }
             writeLock.lock();
             try {
-                Node originNode = cacheTabe.get(key);
+                Node<K, V> originNode = cacheTabe.get(key);
                 if (null == originNode){
                     return;
                 }
                 cacheTabe.remove(key);
                 cacheDoubleList.remove(originNode);
+                if (null != expireCallBacks && expireCallBacks.length > 0){
+                    for (ExpireCallBack<K, V> expireCallBack : expireCallBacks) {
+                        expireCallBack.callBack(originNode.getKey(), originNode.getData());
+                    }
+                }
+                System.out.println("key：" + key + "data:" + originNode.getData() + "expire...");
             } finally {
                 writeLock.unlock();
             }
@@ -321,10 +352,10 @@ public class LocalCache<K, V> {
                     }
                 } catch (InterruptedException e) {
                 }
-                Node last = cacheDoubleList.getLast();
+                Node<K, V> last = cacheDoubleList.getLast();
                 while (null != last) {
-                    if (System.currentTimeMillis() - last.lastModified > this.expireAfterWrite) {
-                        innerSyncExpire(last.key);
+                    if (System.currentTimeMillis() - last.getLastModified() > this.expireAfterWrite) {
+                        innerSyncExpire(last.getKey());
                         last = cacheDoubleList.getLast();
                     }
                 }
@@ -332,109 +363,19 @@ public class LocalCache<K, V> {
                 writeLock.unlock();
             }
         }
-
-        class DoubleList {
-            private Node head;
-            private Node tail;
-            private int size;
-
-            // 在链表头部添加节点 node，时间 O(1)
-            public Node addFirst(Node node) {
-                if (null == head) {
-                    tail = node;
-                } else {
-                    node.next = head;
-                    head.prev = node;
-                }
-                head = node;
-                size++;
-                return head;
-            }
-
-            public Node getFirst() {
-                return head;
-            }
-
-            // 删除链表中的 node 节点（x 一定存在）
-            // 由于是双链表且给的是目标 Node 节点，时间 O(1)
-            public void remove(Node node) {
-                if (null == node) {
-                    return;
-                }
-                Node prev = node.prev;
-                Node next = node.next;
-                if (null == prev) {
-                    // prev == null 说明第head节点
-                    // 删除头结点 需要改变头结点指针
-                    head = next;
-                } else {
-                    prev.next = next;
-                }
-                if (null == next) {
-                    // 说明是tail节点
-                    tail = prev;
-                } else {
-                    next.prev = next;
-                }
-                size--;
-            }
-
-            // 删除链表中最后一个节点，并返回该节点，时间 O(1)
-            public Node removeLast() {
-                if (null == tail) {
-                    return null;
-                }
-                Node tem = tail;
-                Node prev = tail.prev;
-                prev.next = null;
-                tail = prev;
-                size--;
-                return tem;
-            }
-
-            public Node getLast() {
-                return tail;
-            }
-
-            // 返回链表长度，时间 O(1)
-            public int getSize() {
-                return size;
-            }
-        }
-
-        class Node {
-            private final K key;
-            private final V data;
-            public Node next, prev;
-            private final long lastModified;
-
-            private Node(K key, V data, long lastModified) {
-                this.key = key;
-                this.data = data;
-                this.lastModified = lastModified;
-            }
-            private boolean hasExpire(Long lastModified){
-                return this.lastModified < lastModified;
-            }
-
-            private boolean hasExpire(){
-                return System.currentTimeMillis() - this.lastModified > expireAfterWrite;
-            }
-        }
     }
 
-    private class ExpireableWithLRUCache extends ExpireableCache{
+    protected class ExpireableWithLRUCache extends ExpireableCache{
 
         private final int initialCapacity;
-
-        public ExpireableWithLRUCache(int initialCapacity, long expireAfterWrite) {
-            super(initialCapacity, expireAfterWrite);
+        public ExpireableWithLRUCache(int initialCapacity, long expireAfterWrite, ExpireCallBack<K, V>...expireCallBacks) {
+            super(initialCapacity, expireAfterWrite, expireCallBacks);
             this.initialCapacity = initialCapacity;
         }
 
         @Override
         public V get(K key) {
-            Node node = super.cacheTabe.get(key);
+            Node<K, V> node = super.cacheTabe.get(key);
             if (null == node) {
                 return null;
             }
@@ -442,8 +383,8 @@ public class LocalCache<K, V> {
             try {
                 cacheDoubleList.remove(node);
                 node = cacheDoubleList.addFirst(node);
-                cacheTabe.put(node.key, node);
-                return node.data;
+                cacheTabe.put(node.getKey(), node);
+                return node.getData();
             } finally {
                 writeLock.unlock();
             }
@@ -465,7 +406,7 @@ public class LocalCache<K, V> {
             writeLock.lock();
             try {
                 if (cacheTabe.containsKey(key)) {
-                    Node originNode = cacheTabe.get(key);
+                    Node<K, V> originNode = cacheTabe.get(key);
                     cacheDoubleList.remove(originNode);
                     cacheTabe.remove(key);
                 } else {
@@ -473,8 +414,13 @@ public class LocalCache<K, V> {
                     if (this.initialCapacity == size) {
                         // 容量已满
                         // 淘汰最近未使用的
-                        Node last = cacheDoubleList.removeLast();
-                        cacheTabe.remove(last.key);
+                        Node<K, V> last = cacheDoubleList.removeLast();
+                        cacheTabe.remove(last.getKey());
+                        if (null != expireCallBacks && expireCallBacks.length > 0){
+                            for (ExpireCallBack<K, V> expireCallBack : expireCallBacks) {
+                                expireCallBack.callBack(last.getKey(), last.getData());
+                            }
+                        }
                     }
                 }
             } finally {

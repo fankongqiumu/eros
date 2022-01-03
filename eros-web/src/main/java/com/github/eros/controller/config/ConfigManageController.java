@@ -2,11 +2,10 @@ package com.github.eros.controller.config;
 
 
 import com.github.eros.cache.WatchResultCache;
-import com.github.eros.async.Constants;
 import com.github.eros.common.constant.HttpConstants;
-import com.github.eros.common.model.HttpResult;
-import com.github.eros.common.model.Result;
-import com.github.eros.domain.Config;
+import com.github.eros.common.lang.HttpResult;
+import com.github.eros.common.lang.Result;
+import com.github.eros.common.model.Config;
 import com.github.eros.server.event.ConfigModifyEvent;
 import com.github.eros.server.service.manage.ConfigInfoManageService;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,6 +1,6 @@
 package com.github.eros.controller.notify;
 
-import com.github.eros.common.model.HttpResult;
+import com.github.eros.common.lang.HttpResult;
 import com.github.eros.server.service.manage.ConfigInfoManageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,6 +1,5 @@
 package com.github.eros.server.event;
 
-import com.github.eros.domain.Config;
 import org.springframework.context.ApplicationEvent;
 
 /**

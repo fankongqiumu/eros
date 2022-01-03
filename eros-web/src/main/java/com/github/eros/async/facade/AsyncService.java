@@ -1,7 +1,7 @@
 package com.github.eros.async.facade;
 
 import com.github.eros.async.Constants;
-import com.github.eros.common.model.Result;
+import com.github.eros.common.lang.Result;
 import com.github.eros.common.util.JsonUtils;
 import com.github.eros.server.service.ConfigInfoService;
 import org.slf4j.Logger;

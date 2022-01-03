@@ -1,7 +1,7 @@
 package com.github.eros.server.cache;
 
 import com.github.eros.common.lang.MD5;
-import com.github.eros.domain.Config;
+import com.github.eros.common.model.Config;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;

@@ -2,8 +2,7 @@ package com.github.eros.client.forest.service;
 
 import com.dtflys.forest.annotation.*;
 import com.github.eros.client.forest.ClientAddressSource;
-import com.github.eros.common.constant.HttpConstants;
-import com.github.eros.common.model.Result;
+import com.github.eros.common.lang.Result;
 
 @Address(source = ClientAddressSource.class)
 public interface WatchConfigService {

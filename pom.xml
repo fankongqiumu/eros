@@ -8,9 +8,9 @@
         <module>eros-client</module>
         <module>eros-server</module>
         <module>eros-web</module>
-        <module>eros-user</module>
+        <module>eros-auth</module>
         <module>eros-demo</module>
-        <module>eros-domain</module>
+        <module>eros-dal</module>
     </modules>
     <groupId>com.github.eros</groupId>
     <artifactId>eros</artifactId>
@@ -26,10 +26,11 @@
 
         <eros-common.version>0.0.1-SNAPSHOT</eros-common.version>
         <eros-client.version>0.0.1-SNAPSHOT</eros-client.version>
-        <eros-domain.version>0.0.1-SNAPSHOT</eros-domain.version>
         <eros-server.version>0.0.1-SNAPSHOT</eros-server.version>
         <eros-web.version>0.0.1-SNAPSHOT</eros-web.version>
+        <eros-dal.version>0.0.1-SNAPSHOT</eros-dal.version>
         <nameserver.client.version>1.0-SNAPSHOT</nameserver.client.version>
+        <nameserver-spring-boot.version>1.0-SNAPSHOT</nameserver-spring-boot.version>
 
         <forest-spring-boot.version>1.5.0-RC5</forest-spring-boot.version>
         <spring-boot.version>2.5.7</spring-boot.version>
@@ -46,13 +47,14 @@
             </dependency>
             <dependency>
                 <groupId>com.github.eros</groupId>
-                <artifactId>eros-client</artifactId>
-                <version>${eros-client.version}</version>
+                <artifactId>eros-dal</artifactId>
+                <version>${eros-dal.version}</version>
             </dependency>
+
             <dependency>
                 <groupId>com.github.eros</groupId>
-                <artifactId>eros-domain</artifactId>
-                <version>${eros-domain.version}</version>
+                <artifactId>eros-client</artifactId>
+                <version>${eros-client.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.github.eros</groupId>
@@ -66,13 +68,18 @@
             </dependency>
             <dependency>
                 <groupId>com.github.eros</groupId>
-                <artifactId>eros-user</artifactId>
+                <artifactId>eros-auth</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.github.eros</groupId>
                 <artifactId>eros-demo</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.nameserver</groupId>
+                <artifactId>nameserver-spring-boot-starter</artifactId>
+                <version>${nameserver-spring-boot.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.github.nameserver</groupId>
@@ -178,6 +185,12 @@
                 <artifactId>mybatis-spring-boot-starter</artifactId>
                 <version>${mybatis-spring-boot.version}</version>
             </dependency>
+            <!-- https://mvnrepository.com/artifact/com.alibaba/druid -->
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>druid</artifactId>
+                <version>1.2.8</version>
+            </dependency>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-devtools</artifactId>
@@ -193,6 +206,15 @@
                 <version>2.5.7</version>
             </plugin>
         </plugins>
+        <resources>
+            <!--此处的配置是识别到mapper.xml文件，也可以在application.properties中配置-->
+            <resource>
+                <directory>src/main/java</directory>
+                <includes>
+                    <include>**/*.xml</include>
+                </includes>
+            </resource>
+        </resources>
     </build>
 
 </project>

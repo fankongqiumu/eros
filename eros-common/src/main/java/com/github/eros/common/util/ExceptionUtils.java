@@ -2,7 +2,7 @@ package com.github.eros.common.util;
 
 import com.github.eros.common.exception.ErosError;
 import com.github.eros.common.exception.ErosException;
-import com.github.eros.common.model.Result;
+import com.github.eros.common.lang.Result;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;

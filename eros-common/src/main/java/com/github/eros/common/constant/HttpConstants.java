@@ -15,6 +15,7 @@ public class HttpConstants {
 
     public enum HttpStatus {
         OK("200", "OK"),
+        SERVER_BUSY("250", "Server Busy"),
         NOT_MODIFIED("304", "Not Modified"),
         CONTENT_MODIFIED("399", "Content Modified"),
         ;

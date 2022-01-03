@@ -15,30 +15,16 @@
     <dependencies>
         <dependency>
             <groupId>com.github.eros</groupId>
-            <artifactId>eros-common</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.github.eros</groupId>
-            <artifactId>eros-domain</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
+            <artifactId>eros-auth</artifactId>
         </dependency>
         <dependency>
             <groupId>com.github.nameserver</groupId>
-            <artifactId>nameserver-client</artifactId>
+            <artifactId>nameserver-spring-boot-starter</artifactId>
         </dependency>
 
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
         </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>
@@ -57,10 +43,6 @@
             <artifactId>asm-all</artifactId>
         </dependency>
         <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
         </dependency>
@@ -74,24 +56,6 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>com.dtflys.forest</groupId>-->
-<!--            <artifactId>spring-boot-starter-forest</artifactId>-->
-<!--            <exclusions>-->
-<!--                <exclusion>-->
-<!--                    <groupId>*</groupId>-->
-<!--                    <artifactId>*</artifactId>-->
-<!--                </exclusion>-->
-<!--            </exclusions>-->
-<!--        </dependency>-->
-        <dependency>
-            <groupId>com.dtflys.forest</groupId>
-            <artifactId>forest-core</artifactId>
-        </dependency>
-<!--        <dependency>-->
-<!--            <groupId>com.dtflys.forest</groupId>-->
-<!--            <artifactId>forest-spring</artifactId>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>com.dtflys.forest</groupId>
             <artifactId>forest-core</artifactId>

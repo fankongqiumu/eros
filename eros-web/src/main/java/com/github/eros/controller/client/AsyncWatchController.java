@@ -2,7 +2,7 @@ package com.github.eros.controller.client;
 
 import com.github.eros.cache.WatchResultCache;
 import com.github.eros.common.constant.HttpConstants;
-import com.github.eros.common.model.Result;
+import com.github.eros.common.lang.Result;
 import com.github.eros.server.service.ConfigInfoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +12,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
+import java.util.function.Consumer;
 
 @RequestMapping("/async")
 @RestController
@@ -31,7 +32,7 @@ public class AsyncWatchController {
      * @param request
      * @return
      */
-    @RequestMapping(value = "/watch/{namespace}", method = RequestMethod.GET)
+    @GetMapping("/watch/{namespace}")
     public DeferredResult<Result<Void>> watch(@PathVariable("namespace") String namespace,
                                               @RequestParam("lastModified") Long lastModified,
                                               @RequestParam(name = "timeout", required = false) Long timeout,
@@ -48,13 +49,24 @@ public class AsyncWatchController {
             return deferredResult;
         }
 
-        logger.info("Request received");
         deferredResult = new DeferredResult<>(getTimeout(timeout));
         //当deferredResult完成时（不论是超时还是异常还是正常完成），移除watchRequests中相应的watch key
         deferredResult.onCompletion(new Runnable() {
             @Override
             public void run() {
                 logger.info("remove key:[{}] ", namespace);
+                watchResultCache.remove(namespace, deferredResult);
+            }
+        });
+
+        deferredResult.onError(new Consumer<Throwable>() {
+            @Override
+            public void accept(Throwable throwable) {
+                logger.error("watch [{}] error:[{}]", namespace, throwable);
+                Result<Void> noContent = Result.createSuccess();
+                noContent.setMsgCode(String.valueOf(HttpConstants.HttpStatus.SERVER_BUSY.getCode()));
+                noContent.setMsgInfo(HttpConstants.HttpStatus.SERVER_BUSY.getReasonPhrase());
+                deferredResult.setResult(noContent);
                 watchResultCache.remove(namespace, deferredResult);
             }
         });
@@ -70,8 +82,8 @@ public class AsyncWatchController {
                 watchResultCache.remove(namespace, deferredResult);
             }
         });
+
         watchResultCache.add(namespace, deferredResult);
-        logger.info("Servlet thread released");
         return deferredResult;
     }
 

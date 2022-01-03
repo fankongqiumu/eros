@@ -1,10 +1,10 @@
 package com.github.eros.controller.client;
 
 import com.github.eros.common.lang.MD5;
-import com.github.eros.common.model.Result;
+import com.github.eros.common.lang.Result;
 import com.github.eros.common.util.JsonUtils;
 import com.github.eros.controller.user.UserInfoHolder;
-import com.github.eros.domain.Config;
+import com.github.eros.common.model.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.PathVariable;
