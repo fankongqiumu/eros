@@ -9,6 +9,7 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.core.annotation.Order;
 
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 /**
  * spring容器初始化后启动client
  */
+@Order
 public class ErosRunner implements ApplicationRunner, ApplicationContextAware {
 
     private ApplicationContext applicationContext;

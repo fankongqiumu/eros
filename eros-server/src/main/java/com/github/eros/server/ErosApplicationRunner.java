@@ -13,12 +13,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 @Component
+@Order(Ordered.LOWEST_PRECEDENCE - 100)
 public class ErosApplicationRunner implements InitializingBean, ApplicationRunner {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
