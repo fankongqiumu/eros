@@ -5,7 +5,7 @@ import com.github.eros.client.step.ClientStartupStep;
 import com.github.eros.starter.annotation.ErosListener;
 import com.github.eros.starter.annotation.ErosStartupStep;
 import com.github.eros.starter.runner.ErosRunner;
-import com.github.eros.starter.util.ClassScanner;
+import com.github.eros.starter.scanner.ClassScanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ResourceLoaderAware;

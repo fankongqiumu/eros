@@ -1,13 +1,11 @@
-package com.github.eros.demo.springboot;
+package com.github.eros.demo.step;
 
 import com.github.eros.client.step.ClientStartupStep;
-import com.github.eros.starter.annotation.ErosStartupStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.beans.Introspector;
 
-@ErosStartupStep
 public class DemoStartupStep extends ClientStartupStep {
     private  final Logger logger = LoggerFactory.getLogger(this.getClass());
 

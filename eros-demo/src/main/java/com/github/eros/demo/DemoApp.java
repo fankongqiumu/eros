@@ -1,4 +1,4 @@
-package com.github.eros.demo.springboot;
+package com.github.eros.demo;
 
 import com.github.eros.starter.annotation.EnableEros;
 import org.springframework.boot.SpringApplication;

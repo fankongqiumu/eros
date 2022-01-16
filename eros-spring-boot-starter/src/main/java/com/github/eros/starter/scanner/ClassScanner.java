@@ -1,7 +1,5 @@
-package com.github.eros.starter.util;
+package com.github.eros.starter.scanner;
 
-import com.google.common.collect.Sets;
-import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -15,6 +13,7 @@ import org.springframework.core.type.classreading.MetadataReader;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -76,10 +75,10 @@ public class ClassScanner {
         } catch (IOException e) {
             logger.error("resolver.getResources error:", e);
         }
-        if (null == resources || ArrayUtils.isEmpty(resources)){
+        if (null == resources || resources.length <= 0){
             return Collections.emptySet();
         }
-        Set<String> classes = Sets.newHashSet();
+        Set<String> classes = new HashSet<>();
         for (Resource resource : resources) {
             MetadataReader reader;
             try {
