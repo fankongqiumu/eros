@@ -11,6 +11,7 @@
         <module>eros-auth</module>
         <module>eros-demo</module>
         <module>eros-dal</module>
+        <module>eros-spring-boot-starter</module>
     </modules>
     <groupId>com.github.eros</groupId>
     <artifactId>eros</artifactId>

@@ -1,4 +1,4 @@
-package com.github.eros.client.listener;
+package com.github.eros.client;
 
 import com.github.eros.client.forest.ForestFactory;
 import com.github.eros.client.forest.service.FetchConfigService;
@@ -17,10 +17,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 
 /**
@@ -30,21 +27,21 @@ import java.util.concurrent.*;
  */
 public abstract class ErosClientListener {
 
-    protected static final Logger logger = LoggerFactory.getLogger(ErosClientListener.class);
+    private static final Logger logger = LoggerFactory.getLogger(ErosClientListener.class);
 
     private static volatile boolean listenersLoaded = false;
+
+    private static final int availableProcessors = Runtime.getRuntime().availableProcessors();
 
     private static volatile ScheduledExecutorService scheduledExecutorService;
 
     private static volatile ExecutorService fetchExecutorService;
 
-    private static final Map<String, Object>  configCache = new ConcurrentHashMap<>(256);
+    private static final Map<String, Object> configCache = new ConcurrentHashMap<>(256);
 
     private static final Map<String, ErosClientListener> CONFIG_LISTENER_HOLDER = new HashMap<>(32);
 
     protected static final Object lock = new Object();
-
-    protected static final Object fetchExecutorLock = new Object();
 
     private final WatchConfigService configService;
 
@@ -77,7 +74,7 @@ public abstract class ErosClientListener {
             }
             CONFIG_LISTENER_HOLDER.put(namespace, this);
             this.configService = ForestFactory.createInstance(WatchConfigService.class);
-            this.fetchConfigService =  ForestFactory.createInstance(FetchConfigService.class);
+            this.fetchConfigService = ForestFactory.createInstance(FetchConfigService.class);
         }
     }
 
@@ -89,7 +86,7 @@ public abstract class ErosClientListener {
         }
     }
 
-    public void fetchAndWatch(){
+    public void fetchAndWatch() {
         fetchFromServer();
         watchAtFixedRate();
     }
@@ -98,13 +95,13 @@ public abstract class ErosClientListener {
     /**
      * 从服务端拉取配置
      */
-    private void fetchFromServer(){
+    private void fetchFromServer() {
         checkOrInitFetchExecutorService();
         fetchExecutorService.execute(new Runnable() {
             @Override
             public void run() {
                 Result<Config> result = fetchConfigService.fetch(getNamespace());
-                if (result.isSuccess()){
+                if (result.isSuccess()) {
                     Config config = result.getData();
                     String data = config.getData();
                     prepareOnReceiveConfigInfo(data);
@@ -115,8 +112,9 @@ public abstract class ErosClientListener {
     }
 
     private void watchAtFixedRate() {
+        checkOrInitScheduleExecutorService();
         // 长轮训监听
-        final String clientKey = getApp() + ";" + getGrop()  + ";" + localIp;
+        final String clientKey = getApp() + ";" + getGrop() + ";" + localIp;
         scheduledExecutorService.scheduleWithFixedDelay(new Runnable() {
             @Override
             public void run() {
@@ -124,14 +122,14 @@ public abstract class ErosClientListener {
                 logger.info("{} watch [{}] on:{}", Thread.currentThread().getName(), getNamespace(), format.format(new Date()));
                 Result<Void> configResult = configService.watch(getNamespace(), clientKey, HttpConstants.LONG_PULL_TIMEOUT_LONG_VALUE);
                 if (configResult.isNotSuccess()) {
-                    logger.error("{} watch [{}] config from server, respnse:{}, on{}",Thread.currentThread().getName(), getNamespace(), configResult, format.format(new Date()));
+                    logger.error("{} watch [{}] config from server, respnse:{}, on{}", Thread.currentThread().getName(), getNamespace(), configResult, format.format(new Date()));
                     return;
                 }
-                if (HttpConstants.HttpStatus.CONTENT_MODIFIED.getCode().equals(configResult.getMsgCode())){
+                if (HttpConstants.HttpStatus.CONTENT_MODIFIED.getCode().equals(configResult.getMsgCode())) {
                     fetchFromServer();
                 }
             }
-        }, 1, 10, TimeUnit.SECONDS);
+        }, 3, 10, TimeUnit.SECONDS);
     }
 
     private void listenerBaseInfoValidate() {
@@ -146,70 +144,84 @@ public abstract class ErosClientListener {
         }
     }
 
-    private void checkOrInitFetchExecutorService(){
-        if (null != fetchExecutorService){
-            return;
-        }
-        synchronized (fetchExecutorLock) {
-            if (null == fetchExecutorService){
-                fetchExecutorService = new ThreadPoolExecutor(4, 10,
-                        60L, TimeUnit.SECONDS,
-                        new LinkedBlockingQueue(1024),
-                        DefaultThreadFactory.defaultThreadFactory("pool-eros-fetch-thread-"),
-                        new ThreadPoolExecutor.DiscardPolicy()
-                );
+    private void checkOrInitScheduleExecutorService(){
+        if (null == scheduledExecutorService || scheduledExecutorService.isShutdown()) {
+            synchronized (lock) {
+                if (null == scheduledExecutorService || scheduledExecutorService.isShutdown()) {
+                    int coreSize = Math.min(getListeners().size(), availableProcessors);
+                    scheduledExecutorService = new ScheduledThreadPoolExecutor(coreSize,
+                            DefaultThreadFactory.defaultThreadFactory("pool-eros-watch-thread-")
+                    );
+                }
             }
         }
     }
 
-    public static Collection<ErosClientListener> getListeners(){
-        if (null == scheduledExecutorService) {
-            scheduledExecutorService = new ScheduledThreadPoolExecutor(5,
-                    DefaultThreadFactory.defaultThreadFactory("pool-eros-watch-thread-")
-            );
-        }
-        if (CONFIG_LISTENER_HOLDER.isEmpty()) {
+    private void checkOrInitFetchExecutorService() {
+        if (null == fetchExecutorService || fetchExecutorService.isShutdown()) {
             synchronized (lock) {
-                if (CONFIG_LISTENER_HOLDER.isEmpty()) {
-                    loadAndInstanceListeners();
+                if (null == fetchExecutorService || fetchExecutorService.isShutdown()) {
+                    fetchExecutorService = new ThreadPoolExecutor(4, 10,
+                            60L, TimeUnit.SECONDS,
+                            new LinkedBlockingQueue(1024),
+                            DefaultThreadFactory.defaultThreadFactory("pool-eros-fetch-thread-"),
+                            new ThreadPoolExecutor.CallerRunsPolicy()
+                    );
                 }
             }
         }
-        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-            private volatile boolean hasShutdown = false;
-            @Override
-            public void run() {
-                synchronized (lock) {
-                    if (!this.hasShutdown) {
-                        this.hasShutdown = true;
-                        long beginTime = System.currentTimeMillis();
-                        if (null != scheduledExecutorService && !scheduledExecutorService.isShutdown()){
-                            scheduledExecutorService.shutdown();
+    }
+
+    static Collection<ErosClientListener> getListeners() {
+        if (!listenersLoaded) {
+            loadAndInstanceListeners();
+
+            Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+                private volatile boolean hasShutdown = false;
+
+                @Override
+                public void run() {
+                    synchronized (lock) {
+                        if (!this.hasShutdown) {
+                            this.hasShutdown = true;
+                            long beginTime = System.currentTimeMillis();
+                            nonListenerCallback();
+                            long consumingTimeTotal = System.currentTimeMillis() - beginTime;
+                            logger.info("Shutdown hook over, consuming total time(ms): {}", consumingTimeTotal);
                         }
-                        if (null != fetchExecutorService && !fetchExecutorService.isShutdown()){
-                            fetchExecutorService.shutdown();
-                        }
-                        long consumingTimeTotal = System.currentTimeMillis() - beginTime;
-                        logger.info("Shutdown hook over, consuming total time(ms): {}", consumingTimeTotal);
                     }
                 }
-            }
-        }, "ShutdownHook"));
+            }, "ShutdownHook"));
+        }
         return CONFIG_LISTENER_HOLDER.values();
     }
 
+    /**
+     * 配置在eros.facade中的
+     */
     private static void loadAndInstanceListeners() {
         if (listenersLoaded) {
             return;
         }
         synchronized (lock) {
             // 获取classpath下所有实现了本抽象类的类型 并实例化
-            FacadeLoader.loadListeners(ErosClientListener.class, ErosClientListener.class.getClassLoader());
+            ClassLoader classLoaderToUse = ErosClientListener.class.getClassLoader();
+            Set<String> listenerClassNames = FacadeLoader.loadListeners(ErosClientListener.class, classLoaderToUse);
+            if (!listenerClassNames.isEmpty()) {
+                for (String listenerClassName : listenerClassNames) {
+                    try {
+                        Class<?> listenerClass = Class.forName(listenerClassName);
+                        FacadeLoader.instantiateFacade(listenerClassName, listenerClass, classLoaderToUse);
+                    } catch (ClassNotFoundException e) {
+                        logger.error("loadAndInstantiate [{}] failed [{}]", listenerClassName, e);
+                    }
+                }
+            }
             listenersLoaded = true;
         }
     }
 
-    public static void nonListenerCallback() {
+    static void nonListenerCallback() {
         long beginTime = System.currentTimeMillis();
         synchronized (lock) {
             if (null != scheduledExecutorService && !scheduledExecutorService.isShutdown()) {

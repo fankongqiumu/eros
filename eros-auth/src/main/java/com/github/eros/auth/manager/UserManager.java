@@ -9,6 +9,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.Date;
 
 @Component
@@ -30,7 +31,7 @@ public class UserManager extends AbstractSequence {
         Date now = new Date();
         user.setGmtCreate(now);
         user.setGmtModified(now);
-        userMapper.insert(user);
+        userMapper.insert(Collections.singletonList(user));
         return user.getUserId();
     }
 

@@ -1,21 +1,23 @@
 package com.github.eros.server.config;
 
 import com.github.eros.common.cache.LocalCache;
+import com.github.eros.common.lang.DefaultThreadFactory;
 import com.github.eros.server.event.ConfigModifySyncEvent;
-import com.github.nameserver.NameServerClient;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+
+import java.util.concurrent.*;
 
 
 @Configuration
 public class ServerConfiguration {
 
-    @Value("${nameserver.domain}")
-    private String nameServerDomain;
-
+    @Autowired
+    private Environment environment;
 
     private static final int MAX_POOL_SIZE = 50;
 
@@ -36,11 +38,22 @@ public class ServerConfiguration {
         return LocalCache.buildExpireableCache(1024, 15000L);
     }
 
-//    @Bean(name = "nameServerClient")
-//    public NameServerClient nameServerClient(){
-//        return NameServerClient.getInstance(nameServerDomain, true);
-//    }
+    @Bean(name = "modifiedSyncDispatcherService")
+    public ExecutorService modifiedSyncDispatcherService(){
+        return new ThreadPoolExecutor(1, 10,
+                60L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue(1024),
+                DefaultThreadFactory.defaultThreadFactory("pool-eros-modifiedSync-thread-"),
+                new ThreadPoolExecutor.CallerRunsPolicy()
+        );
+    }
 
+    @Bean(name = "modifiedSyncScheduledService")
+    public ScheduledExecutorService modifiedSyncScheduledService(){
+        return  new ScheduledThreadPoolExecutor(5,
+                DefaultThreadFactory.defaultThreadFactory("pool-eros-watch-thread-")
+        );
 
+    }
 
 }

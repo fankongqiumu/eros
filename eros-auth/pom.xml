@@ -13,16 +13,6 @@
     <artifactId>eros-auth</artifactId>
 
     <dependencies>
-<!--        <dependency>-->
-<!--            <groupId>com.github.eros</groupId>-->
-<!--            <artifactId>eros-common</artifactId>-->
-<!--            <exclusions>-->
-<!--                <exclusion>-->
-<!--                    <groupId>*</groupId>-->
-<!--                    <artifactId>*</artifactId>-->
-<!--                </exclusion>-->
-<!--            </exclusions>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>com.github.eros</groupId>
             <artifactId>eros-dal</artifactId>

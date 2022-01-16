@@ -1,6 +1,5 @@
 package com.github.eros.client;
 
-import com.github.eros.client.listener.ErosClientListener;
 import com.github.eros.client.step.ClientStartupStep;
 import com.github.eros.common.constant.Contants;
 import com.github.eros.common.exception.ErosError;
@@ -42,7 +41,7 @@ public final class Client {
         private static final Client INSTANCE = new Client();
     }
 
-    public static Client newInstance() {
+    static Client newInstance() {
         return ErosClientHolder.INSTANCE;
     }
 
@@ -86,6 +85,7 @@ public final class Client {
     public void start() {
         if (started){
             logger.error("the client already started!");
+            return;
         }
         synchronized (lock) {
             if (!started) {
@@ -96,6 +96,14 @@ public final class Client {
                 logger.info("the client started in(ms) {}...", System.currentTimeMillis() - beginTime);
             }
         }
+    }
+
+    static boolean isStarted(){
+        return started;
+    }
+
+    static Collection<ErosClientListener> getListeners(){
+        return ErosClientListener.getListeners();
     }
 
     private void stepBatchStart(List<StartupStep> steps){
@@ -133,7 +141,7 @@ public final class Client {
         @Override
         public void start() {
             this.stepState = StepState.EXECUTEING;
-            Collection<ErosClientListener> listeners = ErosClientListener.getListeners();
+            Collection<ErosClientListener> listeners = getListeners();
             logger.info("......[step-{}] listeners: {}......",this.getName(), listeners);
             if (listeners.isEmpty()) {
                 logger.warn("......[step-{}] no listeners......",this.getName());

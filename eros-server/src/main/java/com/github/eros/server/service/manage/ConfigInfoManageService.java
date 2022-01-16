@@ -5,6 +5,9 @@ import com.dtflys.forest.callback.OnSuccess;
 import com.dtflys.forest.exceptions.ForestRuntimeException;
 import com.dtflys.forest.http.ForestRequest;
 import com.dtflys.forest.http.ForestResponse;
+import com.github.eros.common.exception.ErosError;
+import com.github.eros.common.exception.ErosException;
+import com.github.eros.common.lang.NonNull;
 import com.github.eros.common.model.Config;
 import com.github.eros.server.cache.ConfigLocalCache;
 import com.github.eros.server.cache.ErosServerLocalCache;
@@ -22,15 +25,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
-import org.springframework.lang.NonNull;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
-import java.util.Collections;
-import java.util.Set;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -60,7 +66,23 @@ public class ConfigInfoManageService implements InitializingBean {
     @Autowired
     private ErosServerLocalCache erosServerLocalCache;
 
+    @Autowired
+    @Qualifier("modifiedSyncDispatcherService")
+    private ExecutorService modifiedSyncDispatcherService;
+
+    @Autowired
+    @Qualifier("modifiedSyncScheduledService")
+    private ScheduledExecutorService modifiedSyncScheduledService;
+
     private SyncConfigModifiedService syncConfigModifiedService;
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        syncConfigModifiedService = ForestFactory.createInstance(SyncConfigModifiedService.class);
+        if (null == syncConfigModifiedService){
+            throw new ErosException(ErosError.SYSTEM_ERROR, "ForestFactory.createInstance(SyncConfigModifiedService.class) failed....");
+        }
+    }
 
     /**
      * 配置发布
@@ -119,23 +141,68 @@ public class ConfigInfoManageService implements InitializingBean {
      * 配置同步事件处理
      * @param configModifySyncEvent
      */
-    @Async("asyncEventTaskExecutor")
     @EventListener
     @Order(1)
     public void configModifiedSyncListener(ConfigModifySyncEvent configModifySyncEvent){
-        String namespace = configModifySyncEvent.getNamespace();
-        Set<String> serverList = getServerList();
-        if (serverList.isEmpty()){
-            return;
+        modifiedSyncDispatcherService.execute(new ConfigModifyDispatcher(configModifySyncEvent));
+    }
+
+
+    class ConfigModifyDispatcher implements Runnable {
+        private final ConfigModifySyncEvent configModifySyncEvent;
+
+        ConfigModifyDispatcher(ConfigModifySyncEvent configModifySyncEvent){
+            this.configModifySyncEvent = configModifySyncEvent;
         }
-        String localIp = (String)erosServerLocalCache.getObject(LocalCacheKey.SERVER_NODE_IP);
-        Integer port = (Integer)erosServerLocalCache.getObject(LocalCacheKey.SERVER_NODE_PORT);
-        final String selfServerDomain = localIp + ":" + port;
-        serverList.remove(selfServerDomain);
-        if (serverList.isEmpty()){
-            return;
+
+        @Override
+        public void run() {
+            String namespace = configModifySyncEvent.getNamespace();
+            List<String> serverList = getServerList();
+            if (serverList.isEmpty()){
+                return;
+            }
+            String localIp = erosServerLocalCache.getString(LocalCacheKey.SERVER_NODE_IP);
+            Integer port = erosServerLocalCache.getInteger(LocalCacheKey.SERVER_NODE_PORT);
+            String selfServerDomain = localIp + ":" + port;
+            serverList.remove(selfServerDomain);
+            if (serverList.isEmpty()){
+                return;
+            }
+            for (String serverDomain : serverList) {
+                modifiedSyncScheduledService.submit(new ConfigModifyNotifyTask(serverDomain, namespace));
+            }
         }
-        for (String serverDomain : serverList) {
+    }
+
+
+    class ConfigModifyNotifyTask implements Runnable {
+
+        private int retry = 10;
+        private final String serverDomain;
+        private final String namespace;
+        private final long delay  = 5;
+
+        ConfigModifyNotifyTask(String serverDomain, String namespace){
+            this.serverDomain = serverDomain;
+            this.namespace = namespace;
+        }
+
+        ConfigModifyNotifyTask(int retry, String serverDomain, String namespace){
+            this.retry = retry;
+            this.serverDomain = serverDomain;
+            this.namespace = namespace;
+        }
+
+        @Override
+        public void run() {
+            List<String> serverList = getServerList();
+            if (serverList.isEmpty()
+                    || !serverList.contains(serverDomain)
+                    || retry-- <= 0){
+                return;
+            }
+
             try {
                 syncConfigModifiedService.sync(serverDomain, namespace, new OnSuccess() {
                     @Override
@@ -145,35 +212,45 @@ public class ConfigInfoManageService implements InitializingBean {
                 }, new OnError() {
                     @Override
                     public void onError(ForestRuntimeException ex, ForestRequest req, ForestResponse res) {
-                        logger.info("syncConfigModifiedService.sync serverDomain [{}] failed, req:[{}], res:[{}], error:[{}]",
+                        logger.error("syncConfigModifiedService.sync serverDomain [{}] failed, req:[{}], res:[{}], error:[{}]",
                                 serverDomain, req, res, ex);
-                        // todo 通知
+                        // todo 报警
+                        // 失败后在给定延迟后继续通知
+                        ConfigModifyNotifyTask configModifyNotifyTask
+                                = new ConfigModifyNotifyTask(retry, serverDomain, namespace);
+                        modifiedSyncScheduledService.schedule(configModifyNotifyTask, delay, TimeUnit.SECONDS);
                     }
                 });
             } catch (Exception exception){
-                // todo 通知
+                logger.error("syncConfigModifiedService.sync serverDomain [{}] failed, namespace:[{}], error:[{}]",
+                        serverDomain, namespace, exception);
+                // 失败后在给定延迟后继续通知
+                ConfigModifyNotifyTask configModifyNotifyTask
+                        = new ConfigModifyNotifyTask(retry, serverDomain, namespace);
+                modifiedSyncScheduledService.schedule(configModifyNotifyTask, delay, TimeUnit.SECONDS);
+                // todo 报警
             }
         }
+
     }
+
 
     /**
      * 获取app服务节点
-     * todo 考虑可以做下缓存
      * @return
      */
-    public Set<String> getServerList(){
-        Set<String> appNodeList;
+    public List<String> getServerList(){
+        List<String> appNodeList = null;
         try {
             appNodeList = nameServerClient.getAppNodeList(ErosAppConstants.DEFAULT_APP_NAME);
+            // 此处缓存是为了在极端情况下依然可以获取到节点列表
+            erosServerLocalCache.putObject(LocalCacheKey.SERVER_NODE_LIST, appNodeList);
         } catch (Exception exception){
             logger.error("nameServerClient.getAppNodeList failed, erros:", exception);
-            appNodeList = Collections.emptySet();
+        }
+        if (CollectionUtils.isEmpty(appNodeList)){
+            appNodeList = (List<String>)erosServerLocalCache.getObject(LocalCacheKey.SERVER_NODE_LIST);
         }
         return appNodeList;
-    }
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        syncConfigModifiedService = ForestFactory.createInstance(SyncConfigModifiedService.class);
     }
 }

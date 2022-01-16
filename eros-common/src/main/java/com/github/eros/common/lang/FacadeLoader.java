@@ -2,6 +2,7 @@ package com.github.eros.common.lang;
 
 import com.github.eros.common.exception.ErosError;
 import com.github.eros.common.exception.ErosException;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,14 +19,14 @@ import java.util.Set;
 
 /**
  * @author fankongqiumu
- * @description TODO
+ * @description
  * @date 2021/12/20 15:51
  */
 public class FacadeLoader {
 
-    public static final String FACADE_RESOURCE_LOCATION = "META-INF/facade.properties";
+    public static final String FACADE_RESOURCE_LOCATION = "META-INF/eros.facade";
 
-    public static <T> List<T> loadListeners(Class<T> facadeClass, ClassLoader classLoader) {
+    public static <T> Set<String> loadListeners(Class<T> facadeClass, ClassLoader classLoader) {
         Objects.requireNonNull(facadeClass, "'facadeClass' must not be null");
         ClassLoader classLoaderToUse = classLoader;
         if (classLoaderToUse == null) {
@@ -33,16 +34,12 @@ public class FacadeLoader {
         }
         Set<String> facadeClassNames = loadFacadeNames(facadeClass, classLoaderToUse);
         if (facadeClassNames.isEmpty()) {
-            return Collections.emptyList();
+            return Collections.emptySet();
         }
-        List<T> result = new ArrayList<T>(facadeClassNames.size());
-        for (String facadeClassName : facadeClassNames) {
-            result.add(instantiateFacade(facadeClassName, facadeClass, classLoaderToUse));
-        }
-        return result;
+        return facadeClassNames;
     }
 
-    private static <T> T instantiateFacade(String instanceClassName, Class<T> facadeClass, ClassLoader classLoader) {
+    public static <T> T instantiateFacade(String instanceClassName, Class<T> facadeClass, ClassLoader classLoader) {
         try {
             Class<?> instanceClass = Class.forName(instanceClassName, false, classLoader);
             if (!facadeClass.isAssignableFrom(instanceClass)) {
@@ -73,6 +70,9 @@ public class FacadeLoader {
                     continue;
                 }
                 String propertyValue = properties.getProperty(facadeClasssName);
+                if (StringUtils.isBlank(propertyValue)){
+                    continue;
+                }
                 for (String factoryName : propertyValue.split(",")) {
                     result.add(factoryName.trim());
                 }

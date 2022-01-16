@@ -1,8 +1,9 @@
-package com.github.eros.demo.listener;
+package com.github.eros.demo.springboot;
 
 import com.github.eros.client.ErosClientListener;
 import com.github.eros.common.util.JsonUtils;
 import com.github.eros.demo.model.UserInfo;
+import com.github.eros.starter.annotation.ErosListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @description
  * @date 2021/12/20 02:11
  */
+@ErosListener
 public class UserErosListener extends ErosClientListener {
     private  final Logger logger = LoggerFactory.getLogger(this.getClass());
 

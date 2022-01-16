@@ -13,6 +13,7 @@ public class User {
     private String userName;
     private String nickName;
     private String mail;
+    private String pwd;
     private Date gmtCreate;
     private Date gmtModified;
 
@@ -49,6 +50,14 @@ public class User {
 
     public void setMail(String mail) {
         this.mail = mail;
+    }
+
+    public String getPwd() {
+        return pwd;
+    }
+
+    public void setPwd(String pwd) {
+        this.pwd = pwd;
     }
 
     public Date getGmtCreate() {
