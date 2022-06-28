@@ -80,7 +80,7 @@ public class Eros {
     }
 
     private static List<Address> getNameServerDomainsFromPropertyFile() {
-        // TODO
+        // TODO 从配置文件中读取
         return Collections.emptyList();
     }
 

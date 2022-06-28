@@ -25,7 +25,6 @@ public class ErosImportSelector implements ImportSelector, ResourceLoaderAware {
 
     private ClassScanner scanner;
 
-
     @Override
     public String[] selectImports(AnnotationMetadata importingClassMetadata) {
         String baseClassName = importingClassMetadata.getClassName();

@@ -1,5 +1,6 @@
 package com.github.eros.starter.scanner;
 
+import com.github.eros.common.constant.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -75,7 +76,7 @@ public class ClassScanner {
         } catch (IOException e) {
             logger.error("resolver.getResources error:", e);
         }
-        if (null == resources || resources.length <= 0){
+        if (null == resources || resources.length <= Constants.INTEGER_ZERO){
             return Collections.emptySet();
         }
         Set<String> classes = new HashSet<>();
@@ -88,15 +89,8 @@ public class ClassScanner {
                 Set<String> annotationTypes = annotationMetadata.getAnnotationTypes();
                 String className = annotationMetadata.getClassName();
 
-                boolean flag;
-                if (allLoad) {
-                    flag = true;
-                } else if (null == predicate){
-                    flag = true;
-                } else {
-                    flag = predicate.test(annotationTypes);
-                }
-                if (flag) {
+                boolean isPredicate = allLoad || (null == predicate) || predicate.test(annotationTypes);
+                if (isPredicate) {
                     classes.add(className);
                     logger.info("scanner class [{}]", className);
                 }

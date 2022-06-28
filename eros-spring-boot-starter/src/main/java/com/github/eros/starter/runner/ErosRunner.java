@@ -6,12 +6,13 @@ import com.github.eros.client.forest.Address;
 import com.github.eros.client.step.ClientStartupStep;
 import com.github.eros.common.constant.Constants;
 import com.github.eros.starter.annotation.ErosStartupStep;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.BeansException;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
@@ -22,11 +23,9 @@ import java.util.stream.Collectors;
 /**
  * spring容器初始化后启动client
  */
-@Order
-@Component
-public class ErosRunner implements ApplicationRunner {
+@Order(Ordered.LOWEST_PRECEDENCE - 10)
+public class ErosRunner implements ApplicationRunner, ApplicationContextAware {
 
-    @Autowired
     private ApplicationContext applicationContext;
     
     @Override
@@ -52,5 +51,11 @@ public class ErosRunner implements ApplicationRunner {
             return addressList;
         }
         return Eros.getNameServerDomains();
+    }
+
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        this.applicationContext = applicationContext;
     }
 }
