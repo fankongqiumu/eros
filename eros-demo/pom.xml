@@ -21,6 +21,10 @@
             <artifactId>eros-spring-boot-starter</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>com.github.eros</groupId>
+            <artifactId>eros-common</artifactId>
+        </dependency>
 
         <!--        普通项目直接依赖client即可-->
 <!--        <dependency>-->

@@ -19,11 +19,31 @@
         <dependency>
             <groupId>com.github.eros</groupId>
             <artifactId>eros-client</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.github.eros</groupId>
+            <artifactId>eros-common</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>com.github.nameserver</groupId>
+            <artifactId>nameserver-spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.dtflys.forest</groupId>
+            <artifactId>forest-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
     </dependencies>
 </project>

@@ -1,6 +1,7 @@
 package com.github.eros.server.event;
 
 import com.github.eros.common.cache.LocalCache;
+import com.github.eros.server.common.Constants;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -12,7 +13,7 @@ import javax.annotation.Resource;
 @Component
 public class ConfigModifySyncEventPool {
 
-    @Resource(name = "configModifySyncEventCache")
+    @Resource(name = Constants.CacheConstants.CONFIG_MODIFY_SYNC_EVENT_CACHE)
     private LocalCache<String, ConfigModifySyncEvent> configModifySyncEventCache;
 
     public void modifySyncEventCache(ConfigModifySyncEvent modifySyncEvent){

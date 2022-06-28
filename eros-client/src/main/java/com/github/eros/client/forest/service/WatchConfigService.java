@@ -1,13 +1,14 @@
 package com.github.eros.client.forest.service;
 
 import com.dtflys.forest.annotation.*;
-import com.github.eros.client.forest.ClientAddressSource;
+import com.github.eros.client.forest.ForestFactory;
 import com.github.eros.common.lang.Result;
 
-@Address(source = ClientAddressSource.class)
+@Address(source = ForestFactory.ClientAddressSource.class)
 public interface WatchConfigService {
 
     /**
+     * @param namespace todo head配置
      * headers[此处设置的header是服务端hold的时间]
      * @param namespace
      * @param clientKey

@@ -2,6 +2,7 @@ package com.github.eros.starter.annotation;
 
 
 import com.github.eros.starter.selector.ErosImportSelector;
+import com.github.nameserver.starter.annotation.EnableNameServer;
 import org.springframework.context.annotation.Import;
 
 import java.lang.annotation.Documented;
@@ -13,6 +14,7 @@ import java.lang.annotation.ElementType;
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@Import(ErosImportSelector.class)
+@Import({ErosImportSelector.class})
+@EnableNameServer
 public @interface EnableEros {
 }

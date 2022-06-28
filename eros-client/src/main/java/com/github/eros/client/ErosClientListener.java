@@ -19,17 +19,20 @@ import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author fankongqiumu
- * @description
+ * @description todo nameserver 获取eros的逻辑
  * @date 2021/12/20 00:17
  */
 public abstract class ErosClientListener {
 
     private static final Logger logger = LoggerFactory.getLogger(ErosClientListener.class);
 
-    private static volatile boolean listenersLoaded = false;
+    private static final AtomicBoolean listenersLoaded = new AtomicBoolean(false);
+
+    private static final Object lock = new Object();
 
     private static final int availableProcessors = Runtime.getRuntime().availableProcessors();
 
@@ -37,11 +40,7 @@ public abstract class ErosClientListener {
 
     private static volatile ExecutorService fetchExecutorService;
 
-    private static final Map<String, Object> configCache = new ConcurrentHashMap<>(256);
-
     private static final Map<String, ErosClientListener> CONFIG_LISTENER_HOLDER = new HashMap<>(32);
-
-    protected static final Object lock = new Object();
 
     private final WatchConfigService configService;
 
@@ -86,7 +85,7 @@ public abstract class ErosClientListener {
         }
     }
 
-    public void fetchAndWatch() {
+    void fetchAndWatch() {
         fetchFromServer();
         watchAtFixedRate();
     }
@@ -173,8 +172,28 @@ public abstract class ErosClientListener {
     }
 
     static Collection<ErosClientListener> getListeners() {
-        if (!listenersLoaded) {
-            loadAndInstanceListeners();
+        loadAndInstanceListeners();
+        return CONFIG_LISTENER_HOLDER.values();
+    }
+
+    /**
+     * 配置在eros.facade中的
+     */
+    private static void loadAndInstanceListeners() {
+        if (listenersLoaded.compareAndSet(false, true)) {
+            // 获取classpath下所有实现了本抽象类的类型 并实例化
+            ClassLoader classLoaderToUse = ErosClientListener.class.getClassLoader();
+            Set<String> listenerClassNames = FacadeLoader.loadListeners(ErosClientListener.class, classLoaderToUse);
+            if (!listenerClassNames.isEmpty()) {
+                for (String listenerClassName : listenerClassNames) {
+                    try {
+                        Class<?> listenerClass = Class.forName(listenerClassName);
+                        FacadeLoader.instantiateFacade(listenerClassName, listenerClass, classLoaderToUse);
+                    } catch (ClassNotFoundException e) {
+                        logger.error("loadAndInstantiate [{}] failed [{}]", listenerClassName, e);
+                    }
+                }
+            }
 
             Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
                 private volatile boolean hasShutdown = false;
@@ -192,32 +211,6 @@ public abstract class ErosClientListener {
                     }
                 }
             }, "ShutdownHook"));
-        }
-        return CONFIG_LISTENER_HOLDER.values();
-    }
-
-    /**
-     * 配置在eros.facade中的
-     */
-    private static void loadAndInstanceListeners() {
-        if (listenersLoaded) {
-            return;
-        }
-        synchronized (lock) {
-            // 获取classpath下所有实现了本抽象类的类型 并实例化
-            ClassLoader classLoaderToUse = ErosClientListener.class.getClassLoader();
-            Set<String> listenerClassNames = FacadeLoader.loadListeners(ErosClientListener.class, classLoaderToUse);
-            if (!listenerClassNames.isEmpty()) {
-                for (String listenerClassName : listenerClassNames) {
-                    try {
-                        Class<?> listenerClass = Class.forName(listenerClassName);
-                        FacadeLoader.instantiateFacade(listenerClassName, listenerClass, classLoaderToUse);
-                    } catch (ClassNotFoundException e) {
-                        logger.error("loadAndInstantiate [{}] failed [{}]", listenerClassName, e);
-                    }
-                }
-            }
-            listenersLoaded = true;
         }
     }
 

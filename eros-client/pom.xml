@@ -25,6 +25,16 @@
             </exclusions>
         </dependency>
         <dependency>
+            <groupId>com.github.nameserver</groupId>
+            <artifactId>nameserver-client</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>provided</scope>

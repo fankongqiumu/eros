@@ -1,5 +1,6 @@
 package com.github.eros.common.lang;
 
+import com.github.eros.common.constant.Constants;
 import com.github.eros.common.exception.ErosError;
 import com.github.eros.common.exception.ErosException;
 import org.apache.commons.lang3.StringUtils;
@@ -23,8 +24,6 @@ import java.util.Set;
  * @date 2021/12/20 15:51
  */
 public class FacadeLoader {
-
-    public static final String FACADE_RESOURCE_LOCATION = "META-INF/eros.facade";
 
     public static <T> Set<String> loadListeners(Class<T> facadeClass, ClassLoader classLoader) {
         Objects.requireNonNull(facadeClass, "'facadeClass' must not be null");
@@ -60,8 +59,8 @@ public class FacadeLoader {
         String facadeClasssName = facadeClass.getName();
         try {
             Enumeration<URL> urls = (classLoader != null
-                    ? classLoader.getResources(FACADE_RESOURCE_LOCATION)
-                    : ClassLoader.getSystemResources(FACADE_RESOURCE_LOCATION));
+                    ? classLoader.getResources(Constants.PropertyFileConstants.FACADE_RESOURCE_LOCATION)
+                    : ClassLoader.getSystemResources(Constants.PropertyFileConstants.FACADE_RESOURCE_LOCATION));
             Set<String> result = new HashSet<>();
             while (urls.hasMoreElements()) {
                 URL url = urls.nextElement();
@@ -80,7 +79,7 @@ public class FacadeLoader {
             return result;
         } catch (IOException e) {
             throw new ErosException(ErosError.SYSTEM_ERROR,
-                    "Unable to load factories from location [" + FACADE_RESOURCE_LOCATION + "]", e);
+                    "Unable to load factories from location [" + Constants.PropertyFileConstants.FACADE_RESOURCE_LOCATION + "]", e);
         }
     }
 

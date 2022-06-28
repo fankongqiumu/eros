@@ -1,7 +1,7 @@
 package com.github.eros.server.constant;
 
-public interface ErosAppConstants {
-    String DEFAULT_APP_NAME = "EROS_SERVER";
+import com.github.eros.common.constant.Constants;
 
+public interface ErosAppConstants extends Constants.ErosConstants {
     String SERVER_SYNC_PATH = "/server/sync/{namespace}";
 }

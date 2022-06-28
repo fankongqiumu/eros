@@ -12,6 +12,7 @@ import com.github.eros.common.model.Config;
 import com.github.eros.server.cache.ConfigLocalCache;
 import com.github.eros.server.cache.ErosServerLocalCache;
 import com.github.eros.server.cache.LocalCacheKey;
+import com.github.eros.server.common.Constants;
 import com.github.eros.server.constant.ErosAppConstants;
 import com.github.eros.server.event.ConfigModifyEvent;
 import com.github.eros.server.event.ConfigModifySyncEvent;
@@ -23,6 +24,7 @@ import com.github.eros.server.service.ConfigInfoService;
 import com.github.nameserver.NameServerClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -33,6 +35,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
@@ -67,11 +70,11 @@ public class ConfigInfoManageService implements InitializingBean {
     private ErosServerLocalCache erosServerLocalCache;
 
     @Autowired
-    @Qualifier("modifiedSyncDispatcherService")
+    @Qualifier(Constants.ExecutorConstants.MODIFIED_SYNC_DISPATCHER_SERVICE)
     private ExecutorService modifiedSyncDispatcherService;
 
     @Autowired
-    @Qualifier("modifiedSyncScheduledService")
+    @Qualifier(Constants.ExecutorConstants.MODIFIED_SYNC_SCHEDULED_SERVICE)
     private ScheduledExecutorService modifiedSyncScheduledService;
 
     private SyncConfigModifiedService syncConfigModifiedService;
@@ -94,7 +97,7 @@ public class ConfigInfoManageService implements InitializingBean {
         // 2.  receivePublish
         receivePublish(namespace);
         // 3. 发布配置同步事件
-        configModifiedSync(namespace);
+        ((ConfigInfoManageService) AopContext.currentProxy()).configModifiedSync(namespace);
     }
 
     /**
@@ -108,14 +111,14 @@ public class ConfigInfoManageService implements InitializingBean {
         ConfigModifySyncEvent configModifySyncEvent = buildConfigModifySyncEvent(namespace);
         configModifySyncEventPool.modifySyncEventCache(configModifySyncEvent);
         // 3. 发布配置变更事件
-        configModified(namespace);
+        ((ConfigInfoManageService) AopContext.currentProxy()).configModified(namespace);
     }
 
     /**
      * 发送配置发布事件
      * @param namespace
      */
-    @Async("asyncEventTaskExecutor")
+    @Async(Constants.ExecutorConstants.ASYNC_EVENT_TASK_EXECUTOR)
     public void configModified(String namespace) {
         eventPublisher.publishEvent(new ConfigModifyEvent(namespace));
     }
@@ -124,7 +127,7 @@ public class ConfigInfoManageService implements InitializingBean {
      * 发送配置同步事件
      * @param namespace
      */
-    @Async("asyncEventTaskExecutor")
+    @Async(Constants.ExecutorConstants.ASYNC_EVENT_TASK_EXECUTOR)
     public void configModifiedSync(String namespace) {
         ConfigModifySyncEvent configModifySyncEvent = configModifySyncEventPool.getModifySyncEvent(namespace);
         eventPublisher.publishEvent(configModifySyncEvent);
@@ -141,7 +144,7 @@ public class ConfigInfoManageService implements InitializingBean {
      * 配置同步事件处理
      * @param configModifySyncEvent
      */
-    @EventListener
+    @EventListener(classes = {ConfigModifySyncEvent.class})
     @Order(1)
     public void configModifiedSyncListener(ConfigModifySyncEvent configModifySyncEvent){
         modifiedSyncDispatcherService.execute(new ConfigModifyDispatcher(configModifySyncEvent));
