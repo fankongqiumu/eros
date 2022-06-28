@@ -26,8 +26,19 @@ public interface StartupStep extends Ordered {
     void end();
 
     enum StepState {
+        /**
+         * 未启动
+         */
         NOT_STARTED,
+
+        /**
+         * 启动执行中
+         */
         EXECUTEING,
+
+        /**
+         * 已结束
+         */
         END,
     }
 }

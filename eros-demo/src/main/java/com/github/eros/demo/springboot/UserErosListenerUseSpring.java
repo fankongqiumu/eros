@@ -8,6 +8,6 @@ import com.github.eros.starter.annotation.ErosListener;
  * @description
  * @date 2021/12/20 02:11
  */
-@ErosListener
+//@ErosListener
 public class UserErosListenerUseSpring extends UserErosListener {
 }
