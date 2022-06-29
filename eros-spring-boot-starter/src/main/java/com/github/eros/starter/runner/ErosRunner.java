@@ -11,8 +11,10 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.ResourceLoaderAware;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
@@ -21,13 +23,17 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * spring容器初始化后启动client
+ * @author fankongqiumu
+ * @description spring容器初始化后启动client
+ * @date 2021/12/17 19:39
  */
 @Order(Ordered.LOWEST_PRECEDENCE - 10)
-public class ErosRunner implements ApplicationRunner, ApplicationContextAware {
+public class ErosRunner implements ApplicationRunner, ApplicationContextAware, ResourceLoaderAware {
 
     private ApplicationContext applicationContext;
-    
+
+    private ResourceLoader resourceLoader;
+
     @Override
     public void run(ApplicationArguments args) {
         Client client = Eros.getInstance(innerGetNameServerDomains(args));
@@ -45,17 +51,24 @@ public class ErosRunner implements ApplicationRunner, ApplicationContextAware {
     private List<Address> innerGetNameServerDomains(ApplicationArguments args){
         // 优先选项参数
         List<String> nameserverDomainOptionValues = args.getOptionValues(Constants.PropertyConstants.NAME_SERVER_DOMAINS);
+        List<Address> addressList = null;
         if (!CollectionUtils.isEmpty(nameserverDomainOptionValues)){
-            List<Address> addressList = new ArrayList<>(nameserverDomainOptionValues.size());
+            addressList = new ArrayList<>(nameserverDomainOptionValues.size());
             Eros.parseAddress(addressList, nameserverDomainOptionValues);
-            return addressList;
         }
-        return Eros.getNameServerDomains();
+        return CollectionUtils.isEmpty(addressList)
+                ? Eros.getNameServerDomains(resourceLoader.getClassLoader())
+                : addressList;
     }
 
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
+    }
+
+    @Override
+    public void setResourceLoader(ResourceLoader resourceLoader) {
+        this.resourceLoader = resourceLoader;
     }
 }

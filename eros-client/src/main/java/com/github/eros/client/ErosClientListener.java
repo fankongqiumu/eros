@@ -3,6 +3,7 @@ package com.github.eros.client;
 import com.github.eros.client.forest.ForestFactory;
 import com.github.eros.client.forest.service.FetchConfigService;
 import com.github.eros.client.forest.service.WatchConfigService;
+import com.github.eros.common.constant.Constants;
 import com.github.eros.common.constant.HttpConstants;
 import com.github.eros.common.exception.ErosError;
 import com.github.eros.common.exception.ErosException;
@@ -30,11 +31,11 @@ public abstract class ErosClientListener {
 
     private static final Logger logger = LoggerFactory.getLogger(ErosClientListener.class);
 
-    private static final AtomicBoolean listenersLoaded = new AtomicBoolean(false);
+    private static final AtomicBoolean LISTENERS_LOADED = new AtomicBoolean(false);
 
-    private static final Object lock = new Object();
+    private static final Object LOCK = new Object();
 
-    private static final int availableProcessors = Runtime.getRuntime().availableProcessors();
+    private static final int AVAILABLE_PROCESSORS = Runtime.getRuntime().availableProcessors();
 
     private static volatile ScheduledExecutorService scheduledExecutorService;
 
@@ -46,27 +47,41 @@ public abstract class ErosClientListener {
 
     private final FetchConfigService fetchConfigService;
 
-    private static final String localIp;
-
     static {
         try {
-            localIp = InetAddress.getLocalHost().getHostAddress();
+            System.setProperty(Constants.PropertyConstants.LOCAL_SERVER_DOMAIN, InetAddress.getLocalHost().getHostAddress());
         } catch (UnknownHostException e) {
             throw new ErosException(ErosError.SYSTEM_ERROR, "InetAddress.getLocalHost().getHostAddress() error", e);
         }
     }
 
+    /**
+     * app
+     * @return
+     */
     public abstract String getApp();
 
+    /**
+     * 命名空间
+     * @return
+     */
     public abstract String getNamespace();
 
-    public abstract String getGrop();
+    /**
+     * 分组
+     * @return
+     */
+    public abstract String getGroup();
 
+    /**
+     * 子类实现，有更新时将回调此方法
+     * @param configData
+     */
     protected abstract void onReceiveConfigInfo(String configData);
 
     protected ErosClientListener() {
         listenerBaseInfoValidate();
-        synchronized (lock) {
+        synchronized (LOCK) {
             String namespace = getNamespace();
             if (CONFIG_LISTENER_HOLDER.containsKey(namespace)) {
                 throw new ErosException(ErosError.BUSINIESS_ERROR, "the namespace: " + namespace + " exist...");
@@ -113,7 +128,7 @@ public abstract class ErosClientListener {
     private void watchAtFixedRate() {
         checkOrInitScheduleExecutorService();
         // 长轮训监听
-        final String clientKey = getApp() + ";" + getGrop() + ";" + localIp;
+        final String clientKey = getApp() + ";" + getGroup() + ";" + System.getProperty(Constants.PropertyConstants.LOCAL_SERVER_DOMAIN);
         scheduledExecutorService.scheduleWithFixedDelay(new Runnable() {
             @Override
             public void run() {
@@ -135,7 +150,7 @@ public abstract class ErosClientListener {
         if (StringUtils.isBlank(getApp())) {
             throw new ErosException(ErosError.BUSINIESS_ERROR, "app can not be empty...");
         }
-        if (StringUtils.isBlank(getGrop())) {
+        if (StringUtils.isBlank(getGroup())) {
             throw new ErosException(ErosError.BUSINIESS_ERROR, "group can not be empty...");
         }
         if (StringUtils.isBlank(getNamespace())) {
@@ -145,9 +160,9 @@ public abstract class ErosClientListener {
 
     private void checkOrInitScheduleExecutorService(){
         if (null == scheduledExecutorService || scheduledExecutorService.isShutdown()) {
-            synchronized (lock) {
+            synchronized (LOCK) {
                 if (null == scheduledExecutorService || scheduledExecutorService.isShutdown()) {
-                    int coreSize = Math.min(getListeners().size(), availableProcessors);
+                    int coreSize = Math.min(getListeners().size(), AVAILABLE_PROCESSORS);
                     scheduledExecutorService = new ScheduledThreadPoolExecutor(coreSize,
                             DefaultThreadFactory.defaultThreadFactory("pool-eros-watch-thread-")
                     );
@@ -158,7 +173,7 @@ public abstract class ErosClientListener {
 
     private void checkOrInitFetchExecutorService() {
         if (null == fetchExecutorService || fetchExecutorService.isShutdown()) {
-            synchronized (lock) {
+            synchronized (LOCK) {
                 if (null == fetchExecutorService || fetchExecutorService.isShutdown()) {
                     fetchExecutorService = new ThreadPoolExecutor(4, 10,
                             60L, TimeUnit.SECONDS,
@@ -180,7 +195,7 @@ public abstract class ErosClientListener {
      * 配置在eros.facade中的
      */
     private static void loadAndInstanceListeners() {
-        if (listenersLoaded.compareAndSet(false, true)) {
+        if (LISTENERS_LOADED.compareAndSet(false, true)) {
             // 获取classpath下所有实现了本抽象类的类型 并实例化
             ClassLoader classLoaderToUse = ErosClientListener.class.getClassLoader();
             Set<String> listenerClassNames = FacadeLoader.loadListeners(ErosClientListener.class, classLoaderToUse);
@@ -200,7 +215,7 @@ public abstract class ErosClientListener {
 
                 @Override
                 public void run() {
-                    synchronized (lock) {
+                    synchronized (LOCK) {
                         if (!this.hasShutdown) {
                             this.hasShutdown = true;
                             long beginTime = System.currentTimeMillis();
@@ -216,7 +231,7 @@ public abstract class ErosClientListener {
 
     static void nonListenerCallback() {
         long beginTime = System.currentTimeMillis();
-        synchronized (lock) {
+        synchronized (LOCK) {
             if (null != scheduledExecutorService && !scheduledExecutorService.isShutdown()) {
                 scheduledExecutorService.shutdown();
             }

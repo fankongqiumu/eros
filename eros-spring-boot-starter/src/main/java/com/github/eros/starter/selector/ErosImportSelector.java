@@ -19,6 +19,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
+/**
+ * @author fankongqiumu
+ * @description
+ * @date 2022/01/17 20:20
+ */
 public class ErosImportSelector implements ImportSelector, ResourceLoaderAware {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -35,7 +40,7 @@ public class ErosImportSelector implements ImportSelector, ResourceLoaderAware {
         // 扫描 [ErosListener + ErosStartupStep]
         Set<String> classNames = scanner.loadClass(packageName,
                 annotations -> annotations.contains(ErosListener.class.getName())
-                    || annotations.contains(ErosStartupStep.class.getName())
+                        || annotations.contains(ErosStartupStep.class.getName())
         );
         int size = classNames.size();
 

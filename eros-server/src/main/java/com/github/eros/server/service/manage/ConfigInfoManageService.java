@@ -12,7 +12,7 @@ import com.github.eros.common.model.Config;
 import com.github.eros.server.cache.ConfigLocalCache;
 import com.github.eros.server.cache.ErosServerLocalCache;
 import com.github.eros.server.cache.LocalCacheKey;
-import com.github.eros.server.common.Constants;
+import com.github.eros.server.common.ServerConstants;
 import com.github.eros.server.constant.ErosAppConstants;
 import com.github.eros.server.event.ConfigModifyEvent;
 import com.github.eros.server.event.ConfigModifySyncEvent;
@@ -35,7 +35,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
@@ -70,11 +69,11 @@ public class ConfigInfoManageService implements InitializingBean {
     private ErosServerLocalCache erosServerLocalCache;
 
     @Autowired
-    @Qualifier(Constants.ExecutorConstants.MODIFIED_SYNC_DISPATCHER_SERVICE)
+    @Qualifier(ServerConstants.ExecutorConstants.MODIFIED_SYNC_DISPATCHER_SERVICE)
     private ExecutorService modifiedSyncDispatcherService;
 
     @Autowired
-    @Qualifier(Constants.ExecutorConstants.MODIFIED_SYNC_SCHEDULED_SERVICE)
+    @Qualifier(ServerConstants.ExecutorConstants.MODIFIED_SYNC_SCHEDULED_SERVICE)
     private ScheduledExecutorService modifiedSyncScheduledService;
 
     private SyncConfigModifiedService syncConfigModifiedService;
@@ -118,7 +117,7 @@ public class ConfigInfoManageService implements InitializingBean {
      * 发送配置发布事件
      * @param namespace
      */
-    @Async(Constants.ExecutorConstants.ASYNC_EVENT_TASK_EXECUTOR)
+    @Async(ServerConstants.ExecutorConstants.ASYNC_EVENT_TASK_EXECUTOR)
     public void configModified(String namespace) {
         eventPublisher.publishEvent(new ConfigModifyEvent(namespace));
     }
@@ -127,7 +126,7 @@ public class ConfigInfoManageService implements InitializingBean {
      * 发送配置同步事件
      * @param namespace
      */
-    @Async(Constants.ExecutorConstants.ASYNC_EVENT_TASK_EXECUTOR)
+    @Async(ServerConstants.ExecutorConstants.ASYNC_EVENT_TASK_EXECUTOR)
     public void configModifiedSync(String namespace) {
         ConfigModifySyncEvent configModifySyncEvent = configModifySyncEventPool.getModifySyncEvent(namespace);
         eventPublisher.publishEvent(configModifySyncEvent);

@@ -2,7 +2,7 @@ package com.github.eros.server.config;
 
 import com.github.eros.common.cache.LocalCache;
 import com.github.eros.common.lang.DefaultThreadFactory;
-import com.github.eros.server.common.Constants;
+import com.github.eros.server.common.ServerConstants;
 import com.github.eros.server.event.ConfigModifySyncEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -24,7 +24,7 @@ public class ServerConfiguration {
 
     private static final int CORE_POOL_SIZE = 20;
 
-    @Bean(Constants.ExecutorConstants.ASYNC_EVENT_TASK_EXECUTOR)
+    @Bean(ServerConstants.ExecutorConstants.ASYNC_EVENT_TASK_EXECUTOR)
     public AsyncTaskExecutor asyncEventTaskExecutor() {
         ThreadPoolTaskExecutor asyncTaskExecutor = new ThreadPoolTaskExecutor();
         asyncTaskExecutor.setMaxPoolSize(MAX_POOL_SIZE);
@@ -35,12 +35,12 @@ public class ServerConfiguration {
         return asyncTaskExecutor;
     }
 
-    @Bean(name = Constants.CacheConstants.CONFIG_MODIFY_SYNC_EVENT_CACHE)
+    @Bean(name = ServerConstants.CacheConstants.CONFIG_MODIFY_SYNC_EVENT_CACHE)
     public LocalCache<String, ConfigModifySyncEvent> configModifySyncEventCache() {
         return LocalCache.buildExpireableCache(1024, 15000L);
     }
 
-    @Bean(Constants.ExecutorConstants.MODIFIED_SYNC_DISPATCHER_SERVICE)
+    @Bean(ServerConstants.ExecutorConstants.MODIFIED_SYNC_DISPATCHER_SERVICE)
     public ExecutorService modifiedSyncDispatcherService(){
         return new ThreadPoolExecutor(1, 10,
                 60L, TimeUnit.SECONDS,

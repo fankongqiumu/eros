@@ -31,7 +31,7 @@ public class UserErosListener extends ErosClientListener {
     }
 
     @Override
-    public String getGrop() {
+    public String getGroup() {
         return "USER_DEFAULT_GROUP";
     }
 

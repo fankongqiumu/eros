@@ -5,7 +5,7 @@ package com.github.eros.server.common;
  * @description
  * @date 2022/6/28 19:19
  */
-public interface Constants {
+public interface ServerConstants {
 
     interface ExecutorConstants {
         String MODIFIED_SYNC_DISPATCHER_SERVICE = "modifiedSyncDispatcherService";
